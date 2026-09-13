@@ -4,7 +4,7 @@ def student_marks(marks: list):
 
     for m in marks: 
         try:
-            mark = float(m)
+            mark = int(m)
         except(TypeError, ValueError):
             continue
 
