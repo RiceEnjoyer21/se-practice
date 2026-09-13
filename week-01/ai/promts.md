@@ -118,7 +118,13 @@ No numeric marks were found in the uploaded file. Make sure the file contains a 
 **Does it match the specification?** Yes.
 
 **Step 6:** <br>
-There was no any wrong behavior, so I left it just as it is.
+There was no any wrong behavior, so I left it just as it is. Then I decided to add an multiple test case analysis in once. Changed parsing method.
+**Fixing prompt:** Update the CSV format to support multiple test cases in one file. Each row should start with a case label, followed by the marks for that case, for example:<br>
+A,85,23,45,90,92 <br>
+B,88,47,-5,101,abc,73,50,,100 <br>
+C,10,20,30 <br>
+D,abc,,xyz  <br>
+Parse each row as a separate case <br>
 
 **Step 7:** <br>
 Rocket did not let me download a generated code, as I should upgrade my plan. Screenshots and preview link are attached in `week-01/ai` folder.<br>
