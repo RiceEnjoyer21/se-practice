@@ -88,25 +88,33 @@ no external libraries. Return code plus a short explanation.
 **What I appended to Prompt B:**
 
 ```
+You are a Python developer. Implement analyze_marks(marks, pass_mark=50). Return
+average, highest, lowest, and pass_rate in a dictionary. Accept marks from 0 to 100;
+raise ValueError for an empty list, non-numeric values, or out-of-range values. Use
+no external libraries. Return code plus a short explanation.
 
+Example: analyze_marks([40, 60, 80], 50) → average 60, highest 80, lowest 40,
+pass_rate 66.67. Include tests for: one mark, decimals, custom pass_mark, empty list,
+text value, and marks below 0 or above 100. State any remaining assumptions before
+the code.
 ```
 
 **Tests the AI wrote for itself** — how many, and which situations do they cover?
 
 | Situation | Covered by the AI's tests? |
 | --- | --- |
-| one mark | |
-| decimals | |
-| custom pass_mark | |
-| empty list | |
-| text value | |
-| below 0 / above 100 | |
+| one mark | yes |
+| decimals | yes |
+| custom pass_mark | yes |
+| empty list | yes |
+| text value | yes |
+| below 0 / above 100 | yes |
 
-**Do the AI's own tests pass against the AI's own code?** yes / no
+**Do the AI's own tests pass against the AI's own code?** yes
 
-**Do they agree with the harness in section 6?** yes / no — if no, where do they disagree:
+**Do they agree with the harness in section 6?** yes
 
-**Assumptions C stated explicitly before the code:**
+**Assumptions C stated explicitly before the code:** passing mark rules, default value of pass_mark parameter, handled emply lists, non numeric, out of range values, no external libraries, range of marks(0-100).
 
 ---
 
@@ -115,16 +123,49 @@ no external libraries. Return code plus a short explanation.
 **The complete prompt I wrote** (one message, sent to a fresh chat):
 
 ```
+You are a Python developer. Implement analyze_marks(marks, pass_mark=50).
 
+Function signature: analyze_marks(marks, pass_mark=50)
+
+Return a dictionary with exactly these four keys:
+- "average" — the arithmetic mean of the marks, rounded to 2 decimal places.
+- "highest" — the highest mark, without rounding.
+- "lowest" — the lowest mark, without rounding.
+- "pass_rate" — the percentage of marks greater than or equal to pass_mark, rounded to 2 decimal places. Return it as a percentage from 0 to 100, not as a fraction.
+
+Validation rules:
+Accept marks from 0 to 100;
+raise ValueError for an empty list, non-numeric values, or out-of-range, empty iterable, non-numeric values, boolean values, NaN, infinity values or marks outside 0–100. 
+Numerics strings are not accepted
+A mark passes when mark >= pass_mark.
+
+Constraints:
+Use no external libraries. 
+Return code plus a short explanation.
+Keep the required public function name and signature exactly as specified.
+Return only the required four keys; do not add extra output or features.
+
+Examples:
+#	Call	Required result
+1	analyze_marks([40, 60, 80], 50)	average 60 · highest 80 · lowest 40 · pass_rate 66.67
+2	analyze_marks([100], 50)	average 100 · highest 100 · lowest 100 · pass_rate 100
+3	analyze_marks([49.5, 50], 50)	average 49.75 · highest 50 · lowest 49.5 · pass_rate 50
+4	analyze_marks([], 50)	raises ValueError
+5	analyze_marks([40, "60"], 50)	raises ValueError
+6	analyze_marks([-1, 50, 101], 50)	raises ValueError 
+
+Include tests for: one mark, decimals, custom pass_mark, empty list,
+text value, and marks below 0 or above 100. State any remaining assumptions before
+the code.
 ```
 
 **What I deliberately added that A, B and C did not have:**
 
-1.
-2.
-3.
+1. specified formatting requirements, rounding, percentages, which exact four keys shoud be returned and how
+2. added example cases from section 6
+3. added function signature specification, expanded constraints and validation rules which were not specified in previous prompts.
 
-**The ambiguity I found in the specification, and how I resolved it inside Prompt D:**
+**The ambiguity I found in the specification, and how I resolved it inside Prompt D:** The specification did not state how an invalid pass_mark should be handled. My idea was to require pass_mark to be a numeric value between 0 and 100 and to raise value error if it is invalid.
 
 ---
 
