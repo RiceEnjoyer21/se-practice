@@ -23,7 +23,7 @@
 be checked:
 
 ```
-(paste here, or write "n/a — used Python")
+n/a - used Python
 ```
 
 **Confirmations:**
@@ -39,25 +39,24 @@ be checked:
 **Prompt sent** (should be exactly one sentence):
 
 ```
-
+Write Python code to analyze student marks.
 ```
 
 **Assumptions the AI made that I never gave it** — list them, one per line. A data format, a pass
 threshold, a rounding rule, an input method, an invented feature all count.
 
-1.
-2.
-3.
+1. The input method. The model itself decided to support the .csv files, also added a built-in sample data by default
+2. Passing threshold. The pass mark was set by 40 by default and lowest grade boudary could be changed by the PASS_MARK global constant or in letter_grade() function
+3. Marking analysis. student rankings, statisctics, libraries imported, grade distribution, students at risk and summaries, everything model decided by itself, without any specifications.
 
 **Questions it should have asked and did not:**
 
-1.
-2.
+1. Specify grading boundaries, scales or letters, thresholds like passing marks, an input methods like .csv, .xlsx, manual input and etc.
+2. Which language should be used, should the program include external or only build in libraries, how exceptions or errors should be handled.
 
-**Is the function named `analyze_marks` with the required signature?** yes / no — if no, what is it
-called:
+**Is the function named `analyze_marks` with the required signature?** No, it is called print_report, with only one parameter data(print_report(data)). 
 
-**First impression before testing** (one sentence — you will compare this with section 6 later):
+**First impression before testing** (one sentence — you will compare this with section 6 later): Good output with many useful features, the only issue is that many rules were unspecified, so many things model decided by itself.
 
 ---
 
@@ -66,18 +65,21 @@ called:
 **Prompt sent** (paste it in full, including any substitutions):
 
 ```
-
+You are a Python developer. Implement analyze_marks(marks, pass_mark=50). Return
+average, highest, lowest, and pass_rate in a dictionary. Accept marks from 0 to 100;
+raise ValueError for an empty list, non-numeric values, or out-of-range values. Use
+no external libraries. Return code plus a short explanation.
 ```
 
 **What B fixed compared to A:**
 
-1.
-2.
+1. It created a analyze_marks(marks, pass_mark=50) function and followed function signature, did not created any interface or other functions.
+2. Handled ValueErrors to handle specific test cases, used only math python standard library. Didn't added any additional analysis or features out of the prompt.
 
 **What B still leaves open:**
 
-1.
-2.
+1. Mostly they are related to specification rules. So it still didn't clarified the formatting rules, roundings(percentage in pass_rate, roundings in average as example).
+2. Doesn't specify how to handle with NaN, inf or boolean values.
 
 ---
 
