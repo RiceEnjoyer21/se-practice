@@ -14,9 +14,9 @@ GitHub username: RiceEnjoyer21
 | | |
 | --- | --- |
 | AI assistant (tool) | Claude |
-| Exact model name and version | Claude Sonnet 5 Medium |
+| Exact model name and version | Claude Sonnet 5|
 | Date of the session | 27.09.2026 |
-| Diagram renderer used |  |
+| Diagram renderer used | PlantUML online server |
 
 One tool and one model for all three prompts. If you switched, say why here — it changes what your
 findings mean.
@@ -290,9 +290,9 @@ Rendered diagram (image, or a link): https://cdn-0.plantuml.com/plantuml/png/TP7
 | UC-02 → UC-01 <<include>> | The scenario requires booking validation but does not require executing View availability as part of every booking. | Removed this include relationship and its explanatory comment. Kept Student -> UC-01 and both include relationships to UC-06. |
 
 **Associations.** Which actor–use-case links did the assistant draw that a person does not actually
-trigger? Name them. Answer: None. Student was connected to Check availability, Reserve room, and Cancel reservation. Administrator was associated with blocking or unblocking rooms and reviewing usage. These connections correspond to the duties outlined in the situation. No direct connection was established between either actor and Send confirmation. The eliminated UC-02 -> UC-01 connection involved use cases, not an actor–use-case link.
+trigger? Name them. Answer: None. Student was linked to View availability, Book room, and Cancel booking. Administrator was linked to Block or unblock room and Review usage. These associations match the responsibilities in the scenario. Neither actor was directly linked to Send confirmation. The removed UC-02 → UC-01 include relationship connected two use cases, not an actor and a use case.
 
-**Did any screen, database or internal component appear as a use case or an actor?** No, the diagram includes just Student and Administrator as participants along with the six necessary business use cases. Both performers are beyond the system limit.
+**Did any screen, database or internal component appear as a use case or an actor?** No. The diagram contains only Student and Administrator as actors and the six required business use cases. Both actors are outside the system boundary.
 
 ---
 
@@ -345,20 +345,45 @@ A FAIL you report and explain costs you nothing. One you hide costs the criterio
 
 ```
 $ python tests/validate_submission.py
-(paste)
+submission.yml — submission.yml
+------------------------------------------------------------------------
+PASS   schema                                    1
+PASS   week                                      03
+PASS   student.name                              Abylaikhan
+PASS   student.student_id                        23B031400
+PASS   student.github                            RiceEnjoyer21
+PASS   assistant.tool                            Claude
+PASS   assistant.model                           Sonnet 5
+PASS   counts.user_stories                       6
+PASS   counts.acceptance_criteria_sets           3
+PASS   checker                                   22 PASS · 1 FAIL · 0 ERROR
+PASS   checker.commit                            63ea89b
+PASS   assumptions.overlap_touching_bookings     allowed
+PASS   assumptions.exactly_two_hours             allowed
+PASS   traceability.use_cases_not_covered        UC-01, UC-05
+PASS   traceability.stories_not_traced           []
+PASS   review_findings                           5 findings
+PASS   review_findings[1]                        US-04: Removed unsupported requirements for a single immedia…
+PASS   review_findings[2]                        US-05: Removed the unsupported assumption that blocking pres…
+PASS   review_findings[3]                        AC-02: Added rejection of bookings starting exactly at the c…
+PASS   review_findings[4]                        UC-02: Removed the unjustified include relationship to UC-01…
+PASS   review_findings[5]                        UC-01 and UC-05: Supporting stories exist, but acceptance cr…
+PASS   honesty.can_explain_everything_submitted  yes
+PASS   honesty.ai_usage_disclosed                yes
+------------------------------------------------------------------------
+23 PASS · 0 FAIL · 0 ERROR · 0 note
+Shape is fine. This says nothing about whether the work is good.
 ```
 
 | | PASS | FAIL | ERROR |
 | --- | --- | --- | --- |
-| `check_requirements.py` | | | |
+| `check_requirements.py` | 22 | 1 | 0 |
 
-Commit these numbers were produced at (`git rev-parse --short HEAD`):
+Commit these numbers were produced at (`git rev-parse --short HEAD`): 63ea89b
 
-**Every FAIL, one line each: what it is and what you decided to do about it.** A FAIL you report and
-explain costs you nothing.
+**Every FAIL, one line each: what it is and what you decided to do about it.** US-7: “reminder” in US-04 and “attendance” in US-06 explicitly exclude these features. I retained these scope clarifications.
 
-**Did you run the checks by hand instead of with Python?** Say so here — it costs nothing, but it
-has to be said.
+**Did you run the checks by hand instead of with Python?** No. Both checkers were run using Python.
 
 ---
 
@@ -374,3 +399,7 @@ Answer all three:
 
 Be specific. "The AI was useful" is worth nothing; "UC-06 had no story behind it until I wrote
 US-07, and the checker is what told me" is worth everything.
+
+Conclusion
+
+The generated requirements that caused the most issues related to blocking rooms. The assistant presumed that current bookings would stay unchanged and included a flag for administrator awareness, despite neither action being detailed. I eliminated that criterion and the unverified assumption underlying US-05. In the absence of a checker, I would have recognized this by linking each asserted behavior to the situation and questioning if it was a declared rule or a fabricated policy.The assistant accurately recognized the primary goals of the Student and Administrator, creating a helpful foundational structure for the narratives, acceptance criteria, and diagram. Specifically, delineating the actors’ roles and linking booking and cancellation to Send confirmation provided me with an initial framework that would have required more time to arrange manually. Nonetheless, its extra inclusion of the relationship from Book room to View availability required examination.I would first rewrite US-06, Review usage, before giving the requirements to an implementer. “Usage” does not specify which booking records are included or what outcome the Administrator is expected to obtain. UC-05 likewise lacks acceptance criteria. I would explain the proposed actions and handling of canceled reservations to the stakeholder, then ensure the anticipated results are measurable.
