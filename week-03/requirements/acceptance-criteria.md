@@ -1,73 +1,78 @@
 # Acceptance criteria — three selected stories
 
-Assumptions first, then the criteria. Each block names the story it belongs to. 3 to 5 criteria per
-story, every one in Given / When / Then form, and every set covers a validation or error case — not
-three happy paths.
-
----
-
 ## Assumptions
 
-These must settle the two questions the scenario leaves open. Either answer is accepted; no answer
-is not.
-
-- **Overlap:** a booking that ends exactly when another begins is TODO (allowed / not allowed) under R3, because TODO.
-- **Duration:** a booking of exactly two hours is TODO (allowed / not allowed) under R2, because TODO.
-- TODO (any further assumption you needed)
+- **Overlap:** Back-to-back bookings are allowed under R3 because a booking ending exactly when another begins shares no booked time with it.
+- **Duration:** A booking of exactly two hours is allowed under R2 because “at most two hours” is interpreted as an inclusive limit.
+- A booking must start strictly after the current time.
+- Students can cancel only their own bookings.
+- Repeating a request to block an already blocked room leaves it blocked.
 
 ---
 
-## US-TODO — <story title>
+## US-02 — Book room
 
 ### AC-01
-- **Given** TODO
-- **When** TODO
-- **Then** TODO
+- **Given** an unblocked room has a booking tomorrow from 10:00 to 11:00 and no bookings overlapping 11:00 to 13:00.
+- **When** a Student requests to book that room tomorrow from 11:00 to 13:00.
+- **Then** the booking is created and confirmed to the Student.
 
 ### AC-02
-- **Given** TODO
-- **When** TODO
-- **Then** TODO
+- **Given** an unblocked room is free for the requested one-hour slot.
+- **When** a Student requests a booking starting at or before the current time.
+- **Then** the booking is rejected with the reason that its start must be in the future.
+
+Test both cases: a start in the past and a start exactly at the current time.
 
 ### AC-03
-- **Given** TODO
-- **When** TODO
-- **Then** TODO
-
----
-
-## US-TODO — <story title>
+- **Given** an unblocked room is free for the requested future slot.
+- **When** a Student requests to book it for two hours and one minute.
+- **Then** the booking is rejected with the reason that the maximum duration is two hours.
 
 ### AC-04
-- **Given** TODO
-- **When** TODO
-- **Then** TODO
+- **Given** an unblocked room has a booking tomorrow from 10:00 to 11:00.
+- **When** a Student requests to book the same room tomorrow from 10:30 to 11:30.
+- **Then** the new booking is rejected because it overlaps the existing booking.
 
 ### AC-05
-- **Given** TODO
-- **When** TODO
-- **Then** TODO
-
-### AC-06
-- **Given** TODO
-- **When** TODO
-- **Then** TODO
+- **Given** a room is blocked and has no bookings overlapping the requested future one-hour slot.
+- **When** a Student requests to book that room for that slot.
+- **Then** the booking is rejected because the room is blocked.
 
 ---
 
-## US-TODO — <story title>
+## US-03 — Cancel booking
+
+### AC-06
+- **Given** a Student owns an existing future booking for an unblocked room.
+- **When** the Student cancels that booking.
+- **Then** the booking is cancelled, its time slot becomes available, and the cancellation is confirmed to the Student.
 
 ### AC-07
-- **Given** TODO
-- **When** TODO
-- **Then** TODO
+- **Given** an existing booking belongs to another Student.
+- **When** a Student who does not own it requests its cancellation.
+- **Then** the request is rejected because the Student does not own the booking, and the booking remains unchanged.
 
 ### AC-08
-- **Given** TODO
-- **When** TODO
-- **Then** TODO
+- **Given** the requested booking does not exist.
+- **When** a Student requests its cancellation.
+- **Then** the request is rejected with the reason that the booking was not found, and no existing bookings are changed.
+
+---
+
+## US-05 — Block or unblock room
 
 ### AC-09
-- **Given** TODO
-- **When** TODO
-- **Then** TODO
+- **Given** a room is unblocked and has no existing bookings.
+- **When** an Administrator blocks the room.
+- **Then** the room becomes blocked and unavailable for new bookings.
+
+### AC-10
+- **Given** a room is blocked and has no existing bookings.
+- **When** an Administrator unblocks the room.
+- **Then** the room becomes unblocked and available for booking, subject to the future-start, duration, and non-overlap rules.
+
+### AC-11
+- **Given** a room is already blocked.
+- **When** an Administrator requests to block it again.
+- **Then** the room remains blocked and the Administrator is informed that it was already blocked.
