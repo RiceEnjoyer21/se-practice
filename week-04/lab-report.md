@@ -10,13 +10,13 @@
 
 | Field | Value |
 | --- | --- |
-| Name | <your name> |
-| Group | <your group> |
-| AI assistant | <e.g. Claude, ChatGPT, Gemini, DeepSeek, Grok> |
-| Exact model | <the exact model name with its version, e.g. claude-sonnet-4-5> |
-| Renderer | <PlantUML web server / VS Code extension / IntelliJ plugin / local jar> |
+| Name | Abylaikhan |
+| Group | Monday, 16:00-19:00 |
+| AI assistant | Claude |
+| Exact model | claude-sonnet 5.5 |
+| Renderer | PlantUML web server |
 | Behaviour diagram | <sequence / activity / both> |
-| Stories used | <my week-03 stories, revised / the reference set from README §3> |
+| Stories used | my week-03 stories, revised |
 
 ---
 
