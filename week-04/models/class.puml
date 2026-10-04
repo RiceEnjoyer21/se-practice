@@ -1,0 +1,67 @@
+@startuml
+hide empty members
+skinparam classAttributeIconSize 0
+
+class Student {
+  - studentId : String
+  + bookRoom(room : Room, startTime : DateTime, durationMinutes : Integer) : Booking
+  + cancelBooking(booking : Booking) : void
+}
+
+class Room {
+  - roomId : String
+  - name : String
+  - blocked : Boolean
+  + block() : void
+  + unblock() : void
+  + isBlocked() : Boolean
+  + getAvailability(from : DateTime, to : DateTime) : List<TimeSlot>
+}
+
+class Booking {
+  - bookingId : String
+  - startTime : DateTime
+  - durationMinutes : Integer
+  - status : BookingStatus
+  - confirmationId : String
+  + /endTime : DateTime
+  + isValidRequest(now : DateTime) : Boolean
+  + overlapsWith(other : Booking) : Boolean
+  + confirm() : String
+  + cancel() : void
+  + isActive() : Boolean
+}
+
+enum BookingStatus {
+  ACTIVE
+  CANCELLED
+}
+
+Student "1" -- "0..*" Booking : makes >
+Room "1" -- "0..*" Booking : is reserved by >
+
+note bottom of Booking
+  R1: A new booking must start in the future.
+      Duration must be > 0 and <= 120 minutes.
+      endTime = startTime + durationMinutes.
+
+  R2: ACTIVE bookings for the same room
+      must not overlap.
+      Two intervals overlap when:
+      a.startTime < b.endTime and
+      b.startTime < a.endTime.
+
+  R3: A blocked room cannot accept new bookings.
+      Check Room.blocked before creating a booking.
+
+  R4: Every successful booking produces
+      a confirmation; confirm() sets confirmationId.
+
+  US-03: Only the booking's owner may cancel it.
+      Cancellation changes status to CANCELLED.
+
+  A1: One booking may start exactly when another ends.
+  A2: Blocking a room preserves existing bookings.
+end note
+
+@enduml
