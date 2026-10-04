@@ -1,0 +1,79 @@
+@startuml
+autonumber
+skinparam sequenceMessageAlign left
+
+actor Student
+participant BookingService
+participant BookingRepository
+
+Student -> BookingService : bookRoom(studentId, roomId, startTime, durationMinutes)
+activate BookingService
+
+BookingService -> BookingService : validateRequest(startTime, durationMinutes)
+note right
+  R1: startTime > now
+  0 < durationMinutes <= 120
+end note
+
+alt R1 fails
+  BookingService --> Student : rejection(INVALID_TIME_OR_DURATION)
+else R1 passes
+  BookingService -> BookingService : endTime = startTime + durationMinutes
+
+  note over BookingService, BookingRepository
+    Reservation assumption: the overlap check
+    and save form one atomic operation.
+    Concurrent requests cannot both reserve
+    overlapping slots for the same room.
+  end note
+
+  BookingService -> BookingRepository : findRoom(roomId)
+  activate BookingRepository
+  BookingRepository --> BookingService : room
+  deactivate BookingRepository
+
+  alt room.blocked is true
+    note right of BookingService : R3: blocked rooms reject new bookings.
+    BookingService --> Student : rejection(ROOM_BLOCKED)
+  else room.blocked is false
+    BookingService -> BookingRepository : findActiveBookings(roomId, startTime, endTime)
+    activate BookingRepository
+
+    note right of BookingRepository
+      R2: return only ACTIVE bookings
+      for this room where:
+      existing.startTime < endTime and
+      startTime < existing.endTime.
+      A1: touching bookings do not overlap.
+    end note
+
+    BookingRepository --> BookingService : overlappingBookings
+    deactivate BookingRepository
+
+    alt overlappingBookings is not empty
+      BookingService --> Student : rejection(SLOT_UNAVAILABLE)
+    else overlappingBookings is empty
+      note right of BookingService : R1, R2 and R3 satisfied.
+
+      BookingService -> BookingService : createBooking(studentId, roomId, startTime, durationMinutes)
+      BookingService -> BookingService : confirm(booking)
+
+      note right of BookingService
+        Prepare confirmationId.
+        Send confirmation only after
+        successful persistence.
+      end note
+
+      BookingService -> BookingRepository : saveBooking(booking)
+      activate BookingRepository
+      BookingRepository --> BookingService : savedBooking
+      deactivate BookingRepository
+
+      BookingService --> Student : confirmation(bookingId, roomId, startTime, endTime, confirmationId)
+      note right of BookingService : R4: successful booking produces confirmation.
+    end
+  end
+end
+
+deactivate BookingService
+@enduml

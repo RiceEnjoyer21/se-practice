@@ -40,13 +40,13 @@ Create a UML domain class diagram in PlantUML for Smart Campus. Start with Stude
 ### 2.3 Task 3 — behaviour prompt (3A sequence or 3B activity)
 
 ```text
-<paste>
+Generate PlantUML for Book room. Use Student, BookingService, and BookingRepository lifelines. Validate the supplied rules, then attempt the reservation. Show a successful confirmation and an unavailable-room alternative using alt. Label messages and replies. Explain new design components and all assumptions.
 ```
 
 ### 2.4 Focused correction prompts (if you sent any)
 
 ```text
-<paste, or write "none">
+none
 ```
 
 ### 2.5 Critique prompt
@@ -116,14 +116,16 @@ One row per association in your **revised** class diagram.
 
 ## 5. Task 3 — behaviour diagram review
 
-**Option chosen and why:** <3A sequence / 3B activity — one sentence on why>
+**Option chosen and why:** 3A sequence, it shows how Student, BookingService and BookingRepository interact during validation, reservation and confirmation.
 
-**Design components added beyond the domain model:** <name each one, e.g. `BookingService` —
-what it does in one line; write "none" for an activity diagram>
+**Design components added beyond the domain model:** 
+- BookingService — coordinates the booking request, validates the rules, creates the booking and returns confirmation or rejection.
+- BookingRepository — retrieves rooms and active bookings and persists successful reservations. The overlap check and save are assumed to form one atomic reservation operation.
 
 | # | Element | Problem | Rule or story | Fix |
 | --- | --- | --- | --- | --- |
-| 1 | <element> | <problem> | <rule or story> | <fix> |
+| 1 | Inner alt guards: “room is blocked” and “overlappingBookings is not empty”| Both conditions can be true at the same time. The diagram does not clearly express the blocked-room priority stated in the AI's assumption 7. | R2 and R3; AI assumption 7. The priority is a design choice, not a scenario requirement. | Check blocked status first. Place the overlap query and its alternatives inside the room-not-blocked branch. |
+| 2 | endTime argument in findActiveBookings() | The diagram uses endTime without showing its derivation. The calculation appears only in the AI's assumption 2. | US-02's requested time slot; R1 and R2; derived Booking.endTime in the class diagram. | Add an explicit calculation of endTime from startTime and durationMinutes after R1 passes and before querying overlaps. |
 
 ---
 
