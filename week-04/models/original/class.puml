@@ -1,0 +1,54 @@
+@startuml
+hide empty members
+skinparam classAttributeIconSize 0
+
+class Student {
+  - studentId : String
+  + bookRoom(room : Room, startTime : DateTime, durationMinutes : Integer) : Booking
+  + cancelBooking(booking : Booking) : void
+}
+
+class Room {
+  - roomId : String
+  - name : String
+  - blocked : Boolean
+  + block() : void
+  + unblock() : void
+  + isBlocked() : Boolean
+  + getAvailability(from : DateTime, to : DateTime) : List<TimeSlot>
+}
+
+class Booking {
+  - bookingId : String
+  - startTime : DateTime
+  - durationMinutes : Integer
+  - status : BookingStatus
+  - confirmationId : String
+  + /endTime : DateTime
+  + isValidRequest(now : DateTime) : Boolean
+  + overlapsWith(other : Booking) : Boolean
+  + confirm() : String
+  + cancel() : void
+  + isActive() : Boolean
+}
+
+enum BookingStatus {
+  ACTIVE
+  CANCELLED
+}
+
+Student "1" -- "0..*" Booking : makes >
+Room "1" -- "0..*" Booking : is reserved by >
+Booking ..> BookingStatus
+
+note bottom of Booking
+  R1: isValidRequest() checks future start,
+      duration > 0 and <= 120 minutes
+  R2: overlapsWith() is applied to ACTIVE
+      bookings of the same room
+  R3: Room.isBlocked() is checked before a
+      booking is created
+  R4: confirm() runs after a successful
+      booking and sets confirmationId
+end note
+@enduml

@@ -28,13 +28,13 @@ AI's first replies are saved as files in `models/original/` — do not paste the
 ### 2.1 Task 1 — use-case prompt
 
 ```text
-<paste>
+Using the supplied scenario and approved stories, generate PlantUML for a use-case diagram. Include Student and Administrator outside a named system boundary. Model their goals, show justified associations, and list assumptions. Use include or extend only with a clear reason
 ```
 
 ### 2.2 Task 2 — class prompt
 
 ```text
-<paste>
+Create a UML domain class diagram in PlantUML for Smart Campus. Start with Student, Room, and Booking. Add attributes, appropriate operations, and association multiplicities. Add other classes only when requirements justify them. Explain each relationship and list assumptions. Avoid unjustified inheritance or composition.
 ```
 
 ### 2.3 Task 3 — behaviour prompt (3A sequence or 3B activity)
@@ -59,15 +59,22 @@ AI's first replies are saved as files in `models/original/` — do not paste the
 
 ## 3. Task 1 — use-case review
 
-**Assumptions the AI listed:** <one line each, or "the AI listed none" — that is a finding too>
+**Assumptions the AI listed:** 
+1. US-05 covers both blocking and unblocking, modeled as one use case.
+2. dministrators do not book, cancel, or view availability; only the stories’ actor-to-goal mappings are shown.
+3. Viewing availability is not a prerequisite for booking, so no include connects these use cases.
+4. R1–R3 are internal validation rules within Book Room; R2 and R3 also affect availability.
+5. Cancel Own Booking releases the slot and is restricted to the student who made the booking.
+6. The system boundary contains six use cases and excludes all out-of-scope features.
+7. Both actors are human users; no external systems are in scope.
 
 At least **two** findings. A finding names the element, the problem and the rule or story that
 proves it is a problem.
 
 | # | Element | Problem | Rule or story | Fix |
 | --- | --- | --- | --- | --- |
-| 1 | <e.g. Student → Send confirmation> | <what is wrong> | <R4 / US-01 / scenario sentence> | <what you changed> |
-| 2 | <element> | <problem> | <rule or story> | <fix> |
+| 1 | Book Room -> Receive Booking Confirmation (<<include>>) | The AI explains the relationship outside the diagram, but the required justification comment is missing directly above the relationship in the PlantUML source. | README §4 requires a comment directly above every include relationship; R4 justifies this relationship. | Add ' why: Every successful booking produces a confirmation (R4). directly above the relationship. |
+| 2 | Assumption 2: “Administrators do not book, cancel, or view availability. | This wording turns the absence of administrator stories for these goals into a prohibition. The supplied requirements assign goals to roles but do not establish such a prohibition or say that a person cannot hold both roles. | The scenario and US-01–US-06 specify actor-to-goal mappings, not mutually exclusive roles. | Clarify that only explicitly assigned goals are modeled. Keep the existing actor associations without claiming additional permission restrictions. |
 
 ---
 
@@ -79,24 +86,31 @@ One row per association in your **revised** class diagram.
 
 | Association | Read left → right | Read right → left | Multiplicities |
 | --- | --- | --- | --- |
-| <Student — Booking> | <one student makes 0..* bookings> | <each booking belongs to exactly 1 student> | <1 / 0..*> |
-| <Room — Booking> | <...> | <...> | <...> |
+| Student — Booking | One student may make zero or more bookings. | Each booking belongs to exactly one student. | Student: 1 / Booking: 0..* |
+| Room — Booking | One room may have zero or more bookings over time. | Each booking reserves exactly one room. | Room: 1 / Booking: 0..* |
 
 ### 4.2 Constraints the multiplicities cannot show
 
-- R2: <how your diagram states it — which note, on which class>
-- <any other rule that is not visible in multiplicities>
+- R2: The note attached to Booking explicitly prohibits overlapping ACTIVE bookings for the same room and defines the overlap condition.
+- R1: The Booking note requires a future start and a duration greater than zero and at most 120 minutes.
+- R3: The Booking note requires checking Room.blocked before creation and prohibits new bookings for blocked rooms.
+- R4: The Booking note requires confirmation after every successful booking.
+- US-03: The Booking note restricts cancellation to the booking's owner. Multiplicity identifies the owner but does not enforce permission to cancel.
 
 ### 4.3 Assumptions
 
-- A1: <an assumption you had to make — e.g. what happens to existing bookings when a room is blocked>
-- <A2 ...>
+- A1: Touching bookings are allowed. A booking ending at 12:00 does not overlap with one starting at 12:00. Intervals are treated as start-inclusive and end-exclusive.
+- A2: Blocking a room preserves existing bookings and prevents only new bookings. Unblocking allows new bookings again.
+- A3: Cancelled bookings remain stored with status CANCELLED. They do not prevent new reservations under R2.
+- A4: Duration is represented in whole minutes. endTime is derived from startTime plus durationMinutes.
+- A5: A successful booking has a confirmation identifier. The delivery mechanism is outside this domain diagram.
 
 ### 4.4 Findings
 
 | # | Element | Problem | Rule or story | Fix |
 | --- | --- | --- | --- | --- |
-| 1 | <element> | <problem> | <rule or story> | <fix> |
+| 1 | R2 note on Booking | The original note says overlapsWith() is applied to active bookings, but does not explicitly state that overlapping active bookings for the same room are forbidden. | R2; README §4 requires R2 in a note on Booking. | Replace the wording with an explicit no-overlap constraint and define the overlap condition. |
+| 2 | Booking.overlapsWith() and Room.block() policies | The response leaves touching intervals and the effect of blocking on existing bookings undecided. | README §3 requires both decisions to be declared when the model depends on them; R2 and R3. | Declare A1 and A2 in §4.3 and the diagram note: touching bookings are allowed, and blocking preserves existing bookings. |
 
 ---
 
