@@ -39,7 +39,6 @@ enum BookingStatus {
 
 Student "1" -- "0..*" Booking : makes >
 Room "1" -- "0..*" Booking : is reserved by >
-Booking ..> BookingStatus
 
 note bottom of Booking
   R1: A new booking must start in the future.

@@ -47,12 +47,12 @@ else R1 passes
       A1: touching bookings do not overlap.
     end note
 
-    BookingRepository --> BookingService : overlappingBookings
+    BookingRepository --> BookingService : matchingBookings
     deactivate BookingRepository
 
-    alt overlappingBookings is not empty
+    alt matchingBookings is not empty
       BookingService --> Student : rejection(SLOT_UNAVAILABLE)
-    else overlappingBookings is empty
+    else matchingBookings is empty
       note right of BookingService : R1, R2 and R3 satisfied.
 
       BookingService -> BookingService : createBooking(studentId, roomId, startTime, durationMinutes)
