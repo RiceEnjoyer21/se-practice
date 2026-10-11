@@ -85,7 +85,7 @@ before Prompt A; the student plans to push the branch at the end instead of befo
 ### B1 — Draft (Prompt A)
 
 - **Tool:** Codex
-- **Model:** not displayed, free one
+- **Model:** not displayed
 - **Date:** 2026-10-11
 - **Purpose:** contextual draft
 

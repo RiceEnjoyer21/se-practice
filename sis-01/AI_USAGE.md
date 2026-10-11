@@ -4,9 +4,9 @@ Complete exchanges are in report.md, section 8. The student is responsible for t
 
 | Tool | Exact model / plan | Used for | Which sections it touched |
 | --- | --- | --- | --- |
-| Codex | not displayed, free one | Scenario; outline translation; Prompts A–C; source checks; report editing; reflection drafting; declaration figures. | report.md sections 1–9; submission.yml |
+| Codex | not displayed | Scenario; outline translation; Prompts A–C; source checks; report editing; reflection drafting; declaration figures. | report.md sections 1–9; submission.yml |
 
-**Two parts of this assignment are yours alone. Both were written without AI assistance:** yes
+**Two parts of this assignment are yours alone. Both were written without AI assistance:** no — the student supplied the five initial ideas; Codex translated them and drafted the reflection.
 
 **Every source in section 6 is one I opened and read myself:** yes
 
