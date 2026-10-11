@@ -148,21 +148,25 @@ Selected for the test suite; not yet run. Unless stated otherwise: now=540, bloc
 
 ## 3. Task 2 — the first version (v1), read before it was run
 
-v1 is saved as `code/original/booking_v1.<ext>`, exactly as the assistant returned it: yes / no
+v1 is saved as `code/original/booking_v1.<ext>`, exactly as the assistant returned it: yes
 
 **AC map.** One row per condition in v1. Quote the line.
 
 | # | Line in v1 | AC it implements | Correct as written? If not, why |
 | --- | --- | --- | --- |
-| 1 | | | |
-| 2 | | | |
-| 3 | | | |
-| 4 | | | |
+| 1 | if blocked: | AC3 | Correct. Returns False when the room is blocked. The contract guarantees blocked is Boolean. |
+| 2 | if not (0 <= start < end <= 1440): | AC1 | Correct. Rejects invalid day bounds, zero-length requests and reversed intervals. Allows end = 1440. |
+| 3 | if start <= now: | AC1 | Correct. Rejects starts before or exactly at now, enforcing start > now. |
+| 4 | if end - start > 120: | AC2 | Correct. Rejects durations above 120 minutes and allows exactly 120 minutes. |
+| 5 | if start < e and s < end: | AC4 | Correct. Both comparisons must hold for overlap. Strict comparisons allow touching endpoints on either side. |
+| 6 | return True | AC5 | Correct. Reached only after all earlier checks pass and no existing booking conflicts. All rejection paths return False. |
 
 **Anything in v1 that no AC asks for** (extra validation, a buffer between bookings, logging,
 saving the booking, a different return type):
 
--
+- None. The function adds no booking restrictions, logging, saving or confirmation. It only reads existing and returns Boolean values.
+
+Prediction before running: By inspection, I expect no failures for inputs covered by the contract. In particular, touching endpoints, exactly 120 minutes and end = 1440 should be allowed when all other criteria hold. This prediction has not yet been verified by execution.
 
 ---
 
