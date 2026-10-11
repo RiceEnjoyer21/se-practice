@@ -29,7 +29,7 @@ checker:                        # from your LAST run of python tests/check_repor
   pass: 24
   fail: 0
   error: 0
-  commit: "24f157e"                      # fill after committing the current report.md
+  commit: "3183905"             # commit containing the checked report.md
 
 counts:                         # copy from the checker's output; the validator re-measures them
   main_words: 810
