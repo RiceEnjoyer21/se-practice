@@ -221,13 +221,37 @@ cause column says why no change was needed.
 **The assistant's critique, pasted unedited:**
 
 ```text
-(paste here)
+No new code came with your message, so I reviewed the can_book I wrote earlier in this conversation (the booking.py version). If you meant a different implementation, paste it and I’ll review that one instead.
+
+I found no concrete issues against the contract or AC1-AC5. I checked each line:
+
+Line	Concerns	Result
+if blocked:	AC3	Correct. The contract says blocked is a Boolean, so a truthiness test is equivalent to blocked is True.
+if not (0 <= start < end <= 1440):	AC1	Correct. The bounds match exactly, including end == 1440 and the rejection of zero-length and reversed intervals.
+if start <= now:	AC1	Correct. It rejects start == now, as the strict start > now requires.
+if end - start > 120:	AC2	Correct. Exactly 120 passes and 121 fails.
+if start < e and s < end:	AC4	Correct for half-open intervals. Touching endpoints are not overlaps, and containment and identical intervals are caught.
+return True and the early return False lines	AC5	Correct. Only literal True and False are returned, and existing is never sorted, appended to, or modified.
+
+Two things are not violations, because the contract covers them:
+
+for s, e in existing: assumes each entry is a valid 2-tuple. The contract guarantees valid (start, end) tuples.
+Non-integer or out-of-range now values are not handled. The contract says now is valid (0-1439), and you asked me not to cover non-integer inputs at this stage.
+
+I won’t list issues just to fill the five slots. If you have a specific suspicion about a line, tell me which one and I’ll check it against the criteria.
 ```
 
 | # | Suggestion | accept / reject | Reason — cite the AC or the contract line | Suite after the change |
 | --- | --- | --- | --- | --- |
-| 1 | | accept / reject | | |
-| 2 | | accept / reject | | |
+| 1 | `if blocked:` correctly checks blocked status. | accept | AC3 forbids booking a blocked room; the contract guarantees blocked is Boolean. | No change; 19 tests OK. |
+| 2 | `if not (0 <= start < end <= 1440):` matches the time bounds. | accept | AC1 requires exactly these bounds, including start < end and end <= 1440. | No change; 19 tests OK. |
+| 3 | `if start <= now:` correctly rejects starts at or before now. | accept | AC1 requires start > now, strictly. | No change; 19 tests OK. |
+| 4 | `if end - start > 120:` correctly enforces the duration limit. | accept | AC2 allows at most 120 minutes, including exactly 120. | No change; 19 tests OK. |
+| 5 | `if start < e and s < end:` correctly detects overlap. | accept | AC4 rejects overlap but allows touching endpoints. Strict comparisons implement this for half-open intervals. | No change; 19 tests OK. |
+| 6 | The function returns Booleans and leaves existing unchanged. | accept | AC5 and the contract require True/False and unchanged inputs. The code only reads existing. | No change; 19 tests OK. |
+| 7 | Valid tuple entries do not need additional validation. | accept | The contract guarantees valid (start, end) tuples in existing. | No change; 19 tests OK. |
+| 8 | Additional validation of now is not required. | accept | The contract guarantees now is valid, from 0 to 1439. | No change; 19 tests OK. |
+| 9 | Type checks on start and end are not required by the supplied contract. | accept | The contract specifies integer times. Behaviour for non-integer inputs is a separate decision documented in section 9.2. | No change; 19 tests OK. |
 
 ---
 
