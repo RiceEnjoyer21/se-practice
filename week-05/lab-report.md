@@ -182,11 +182,19 @@ Base input for every row unless the row says otherwise: `now=540, blocked=False,
 | 4 | test_exactly_120_minutes_is_allowed | (720, 840) | None | True | AC2 | PASS | Pending final run |
 | 5 | test_121_minutes_is_rejected | (720, 841) | None | False | AC2 | PASS | Pending final run |
 | 6 | test_start_equal_to_now_is_rejected | (540, 570) | None | False | AC1 | PASS | Pending final run |
-| 7 | | | | | | | |
-| 8 | | | | | | | |
-| 9 | | | | | | | |
-| 10 | | | | | | | |
-| 11 | | | | | | | |
+| 7 | test_zero_length_request_is_rejected | (720, 720) | None | False | AC1 | PASS | Pending final run |
+| 8 | test_reversed_request_is_rejected | (720, 690) | None | False | AC1 | PASS | Pending final run |
+| 9 | test_end_at_1440_is_allowed | (1380, 1440) | None | True | AC1 | PASS | Pending final run |
+| 10 | test_end_after_1440_is_rejected | (1380, 1441) | None | False | AC1 | PASS | Pending final run |
+| 11 | test_empty_existing_is_allowed | (660, 720) | existing=[] | True | AC4, AC5 | PASS | Pending final run |
+| 12 | test_fits_exactly_between_two_bookings | (660, 720) | existing=[(600, 660), (720, 780)] | True | AC4 | PASS | Pending final run |
+| 13 | test_conflict_only_with_last_entry_of_unsorted_list | (630, 690) | existing=[(900, 960), (600, 660)] | False | AC4 | PASS | Pending final run |
+| 14 | test_touching_existing_start_is_allowed | (570, 600) | None | True | AC4 | PASS | Pending final run |
+| 15 | test_contained_within_existing_is_rejected | (615, 645) | None | False | AC4 | PASS | Pending final run |
+| 16 | test_containing_existing_is_rejected | (570, 690) | None | False | AC4 | PASS | Pending final run |
+| 17 | test_existing_unchanged_after_accepted_request | (660, 720) | existing=[(900, 960), (600, 660)]; compare with saved copy | True; list unchanged | AC5 | PASS | Pending final run |
+| 18 | test_existing_unchanged_after_rejected_request | (630, 690) | existing=[(900, 960), (600, 660)]; compare with saved copy | False; list unchanged | AC5 | PASS | Pending final run |
+| 19 | test_last_minute_of_day_is_allowed | (1439, 1440) | now=1438; existing=[] | True | AC1–AC5 | PASS | Pending final run |
 
 ---
 
@@ -198,7 +206,8 @@ cause column says why no change was needed.
 
 | # | Input (the full call) | Expected | Actual | Cause (quote the line) | Fix | Who proposed the fix |
 | --- | --- | --- | --- | --- | --- | --- |
-| 1 | | | | | | |
+| 1 | can_book(1439, 1440, 1438, False, []) | True | True | No defect found. `if not (0 <= start < end <= 1440):` allows end=1440, and `if start <= now:` allows 1439 > 1438. The new edge-case test passed. | No implementation change needed. | Not applicable |
+| 2 | can_book(660, 720, 540, False, [(600, 660)]) | True | NotImplementedError | The working booking.py still contained the starter line `raise NotImplementedError`. This was a file preparation error, not a defect in the assistant's v1. | Copied the unchanged assistant-generated v1 into code/booking.py. | ChatGPT |
 
 **The debug prompt I sent, and the assistant's answer** (leave the block empty if you did not use it):
 
@@ -226,7 +235,7 @@ cause column says why no change was needed.
 
 | # | What changed (the line, before → after) | Why | Evidence: the test or check that moved |
 | --- | --- | --- | --- |
-| 1 | | | |
+| 1 | No implementation change: booking.py remains identical to booking_v1.py. | v1 satisfied the contract in all observed checks. The additional last-minute booking also returned the expected True. | F1–F10 PASS; all 19 suite tests passed, including test_last_minute_of_day_is_allowed. |
 
 ---
 

@@ -101,6 +101,10 @@ class TestCanBook(unittest.TestCase):
         self.assertIs(result, False)
         self.assertEqual(existing, saved)
 
+    def test_last_minute_of_day_is_allowed(self):
+        result = can_book(1439, 1440, 1438, False, [])
+        self.assertIs(result, True)
+
 
 if __name__ == "__main__":
     unittest.main()
