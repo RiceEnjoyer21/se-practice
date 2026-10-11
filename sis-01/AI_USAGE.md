@@ -7,7 +7,7 @@ live in `report.md`, section 8 — this file is the summary, not a second copy.
 
 | Tool | Exact model / plan | Used for | Which sections it touched |
 | --- | --- | --- | --- |
-| Codex | not displayed | Read the assignment and checker; prepare the fictional scenario; translate the student's five initial ideas from Russian into English without adding ideas. Prompts A, B and C have not been run yet. | report.md sections 1 and 7 |
+| Codex | not displayed | Prepare the fictional scenario; translate the student's five initial ideas without adding ideas; process Prompts A, B and C sequentially in this session; open and check sources; prepare the assisted analysis, review, conclusion, references and evidence tables. | report.md sections 1–4 and 6–9 |
 
 **Two parts of this assignment are yours alone. Both were written without AI assistance:** no
 
@@ -18,7 +18,11 @@ written yet.
      (section 5). If "no", say exactly what was assisted. An honest "no" costs far less than an
      undisclosed "yes". -->
 
-**Every source in section 6 is one I opened and read myself:** yes / no
+**Every source in section 6 is one I opened and read myself:** no
+
+Codex opened and read the cited slides and syllabus. The student's independent reading has not
+been confirmed. The verification table records the assistant's checks, not a claim that the
+student personally performed them.
 
 **Everything I submitted, I can explain and defend without consulting the assistant:** yes / no
 
