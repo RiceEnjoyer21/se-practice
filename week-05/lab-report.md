@@ -176,12 +176,12 @@ Base input for every row unless the row says otherwise: `now=540, blocked=False,
 
 | # | Test name | Request (start, end) | What differs from the base input | Expected | AC | Result on v1 | Result on final |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| 1 | | | | | | | |
-| 2 | | | | | | | |
-| 3 | | | | | | | |
-| 4 | | | | | | | |
-| 5 | | | | | | | |
-| 6 | | | | | | | |
+| 1 | test_touching_end_is_allowed | (660, 720) | None | True | AC4 | PASS | Pending final run |
+| 2 | test_overlap_is_rejected | (630, 690) | None | False | AC4 | PASS | Pending final run |
+| 3 | test_blocked_room_is_rejected | (660, 720) | blocked=True | False | AC3 | PASS | Pending final run |
+| 4 | test_exactly_120_minutes_is_allowed | (720, 840) | None | True | AC2 | PASS | Pending final run |
+| 5 | test_121_minutes_is_rejected | (720, 841) | None | False | AC2 | PASS | Pending final run |
+| 6 | test_start_equal_to_now_is_rejected | (540, 570) | None | False | AC1 | PASS | Pending final run |
 | 7 | | | | | | | |
 | 8 | | | | | | | |
 | 9 | | | | | | | |
