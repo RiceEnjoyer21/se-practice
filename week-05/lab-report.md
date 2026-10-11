@@ -368,8 +368,7 @@ The same IDs as `known_fails` in `submission.yml`. Write `none` if the run is cl
 
 | Check | Why it stays |
 | --- | --- |
-
-No remaining FAIL or ERROR checks.
+| none | The final checker run reports 32 PASS, 0 FAIL and 0 ERROR. |
 
 ### 9.2 Outside the contract
 
