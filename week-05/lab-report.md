@@ -176,25 +176,25 @@ Base input for every row unless the row says otherwise: `now=540, blocked=False,
 
 | # | Test name | Request (start, end) | What differs from the base input | Expected | AC | Result on v1 | Result on final |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| 1 | test_touching_end_is_allowed | (660, 720) | None | True | AC4 | PASS | Pending final run |
-| 2 | test_overlap_is_rejected | (630, 690) | None | False | AC4 | PASS | Pending final run |
-| 3 | test_blocked_room_is_rejected | (660, 720) | blocked=True | False | AC3 | PASS | Pending final run |
-| 4 | test_exactly_120_minutes_is_allowed | (720, 840) | None | True | AC2 | PASS | Pending final run |
-| 5 | test_121_minutes_is_rejected | (720, 841) | None | False | AC2 | PASS | Pending final run |
-| 6 | test_start_equal_to_now_is_rejected | (540, 570) | None | False | AC1 | PASS | Pending final run |
-| 7 | test_zero_length_request_is_rejected | (720, 720) | None | False | AC1 | PASS | Pending final run |
-| 8 | test_reversed_request_is_rejected | (720, 690) | None | False | AC1 | PASS | Pending final run |
-| 9 | test_end_at_1440_is_allowed | (1380, 1440) | None | True | AC1 | PASS | Pending final run |
-| 10 | test_end_after_1440_is_rejected | (1380, 1441) | None | False | AC1 | PASS | Pending final run |
-| 11 | test_empty_existing_is_allowed | (660, 720) | existing=[] | True | AC4, AC5 | PASS | Pending final run |
-| 12 | test_fits_exactly_between_two_bookings | (660, 720) | existing=[(600, 660), (720, 780)] | True | AC4 | PASS | Pending final run |
-| 13 | test_conflict_only_with_last_entry_of_unsorted_list | (630, 690) | existing=[(900, 960), (600, 660)] | False | AC4 | PASS | Pending final run |
-| 14 | test_touching_existing_start_is_allowed | (570, 600) | None | True | AC4 | PASS | Pending final run |
-| 15 | test_contained_within_existing_is_rejected | (615, 645) | None | False | AC4 | PASS | Pending final run |
-| 16 | test_containing_existing_is_rejected | (570, 690) | None | False | AC4 | PASS | Pending final run |
-| 17 | test_existing_unchanged_after_accepted_request | (660, 720) | existing=[(900, 960), (600, 660)]; compare with saved copy | True; list unchanged | AC5 | PASS | Pending final run |
-| 18 | test_existing_unchanged_after_rejected_request | (630, 690) | existing=[(900, 960), (600, 660)]; compare with saved copy | False; list unchanged | AC5 | PASS | Pending final run |
-| 19 | test_last_minute_of_day_is_allowed | (1439, 1440) | now=1438; existing=[] | True | AC1–AC5 | PASS | Pending final run |
+| 1 | test_touching_end_is_allowed | (660, 720) | None | True | AC4 | PASS | PASS |
+| 2 | test_overlap_is_rejected | (630, 690) | None | False | AC4 | PASS | PASS |
+| 3 | test_blocked_room_is_rejected | (660, 720) | blocked=True | False | AC3 | PASS | PASS |
+| 4 | test_exactly_120_minutes_is_allowed | (720, 840) | None | True | AC2 | PASS | PASS |
+| 5 | test_121_minutes_is_rejected | (720, 841) | None | False | AC2 | PASS | PASS |
+| 6 | test_start_equal_to_now_is_rejected | (540, 570) | None | False | AC1 | PASS | PASS |
+| 7 | test_zero_length_request_is_rejected | (720, 720) | None | False | AC1 | PASS | PASS |
+| 8 | test_reversed_request_is_rejected | (720, 690) | None | False | AC1 | PASS | PASS |
+| 9 | test_end_at_1440_is_allowed | (1380, 1440) | None | True | AC1 | PASS | PASS |
+| 10 | test_end_after_1440_is_rejected | (1380, 1441) | None | False | AC1 | PASS | PASS |
+| 11 | test_empty_existing_is_allowed | (660, 720) | existing=[] | True | AC4, AC5 | PASS | PASS |
+| 12 | test_fits_exactly_between_two_bookings | (660, 720) | existing=[(600, 660), (720, 780)] | True | AC4 | PASS | PASS |
+| 13 | test_conflict_only_with_last_entry_of_unsorted_list | (630, 690) | existing=[(900, 960), (600, 660)] | False | AC4 | PASS | PASS |
+| 14 | test_touching_existing_start_is_allowed | (570, 600) | None | True | AC4 | PASS | PASS |
+| 15 | test_contained_within_existing_is_rejected | (615, 645) | None | False | AC4 | PASS | PASS |
+| 16 | test_containing_existing_is_rejected | (570, 690) | None | False | AC4 | PASS | PASS |
+| 17 | test_existing_unchanged_after_accepted_request | (660, 720) | existing=[(900, 960), (600, 660)]; compare with saved copy | True; list unchanged | AC5 | PASS | PASS |
+| 18 | test_existing_unchanged_after_rejected_request | (630, 690) | existing=[(900, 960), (600, 660)]; compare with saved copy | False; list unchanged | AC5 | PASS | PASS |
+| 19 | test_last_minute_of_day_is_allowed | (1439, 1440) | now=1438; existing=[] | True | AC1–AC5 | PASS | PASS |
 
 ---
 
@@ -270,7 +270,31 @@ I won’t list issues just to fill the five slots. If you have a specific suspic
 Paste the **complete** terminal output. For Python: everything `python -m unittest -v` printed.
 
 ```text
-(paste here)
+python -m unittest -v
+test_121_minutes_is_rejected (test_booking.TestCanBook) ... ok
+test_blocked_room_is_rejected (test_booking.TestCanBook) ... ok
+test_conflict_only_with_last_entry_of_unsorted_list (test_booking.TestCanBook) ... ok
+test_contained_within_existing_is_rejected (test_booking.TestCanBook) ... ok
+test_containing_existing_is_rejected (test_booking.TestCanBook) ... ok
+test_empty_existing_is_allowed (test_booking.TestCanBook) ... ok
+test_end_after_1440_is_rejected (test_booking.TestCanBook) ... ok
+test_end_at_1440_is_allowed (test_booking.TestCanBook) ... ok
+test_exactly_120_minutes_is_allowed (test_booking.TestCanBook) ... ok
+test_existing_unchanged_after_accepted_request (test_booking.TestCanBook) ... ok
+test_existing_unchanged_after_rejected_request (test_booking.TestCanBook) ... ok
+test_fits_exactly_between_two_bookings (test_booking.TestCanBook) ... ok
+test_last_minute_of_day_is_allowed (test_booking.TestCanBook) ... ok
+test_overlap_is_rejected (test_booking.TestCanBook) ... ok
+test_reversed_request_is_rejected (test_booking.TestCanBook) ... ok
+test_start_equal_to_now_is_rejected (test_booking.TestCanBook) ... ok
+test_touching_end_is_allowed (test_booking.TestCanBook) ... ok
+test_touching_existing_start_is_allowed (test_booking.TestCanBook) ... ok
+test_zero_length_request_is_rejected (test_booking.TestCanBook) ... ok
+
+----------------------------------------------------------------------
+Ran 19 tests in 0.002s
+
+OK
 ```
 
 ### 8.2 The checker, final run
@@ -279,7 +303,44 @@ Paste the **complete** output of `python tests/check_booking.py`. Paste it **las
 this file afterwards, run the checker again and paste again.
 
 ```text
-(paste here)
+Week 05 - can_book: the function, your tests, the evidence   (Path A)
+
+PASS   F1   the six cases from the task table           6 of 6 cases
+PASS   F2   AC1 time order and day bounds               5 of 5 cases
+PASS   F3   AC1 the start is in the future              5 of 5 cases
+PASS   F4   AC2 at most 120 minutes                     3 of 3 cases
+PASS   F5   AC3 a blocked room accepts nothing          2 of 2 cases
+PASS   F6   AC4 every kind of overlap is rejected       5 of 5 cases
+PASS   F7   AC4 touching endpoints are allowed          3 of 3 cases
+PASS   F8   AC4 every existing booking is checked       4 of 4 cases
+PASS   F9   AC5 the result is a real Boolean            3 of 3 cases
+PASS   F10  AC5 the inputs are left unchanged           2 of 2 cases
+PASS   O1   the assistant's first version is kept       v1 kept (26 lines)
+PASS   S1   your suite has at least 11 tests            19 tests
+PASS   S2   your suite is green on your own code        19 tests, OK
+PASS   M1   your tests catch a fault in AC1             caught by test_start_equal_to_now_is_rejected
+PASS   M2   your tests catch a fault in AC1             caught by test_end_after_1440_is_rejected
+PASS   M3   your tests catch a fault in AC1             caught by test_zero_length_request_is_rejected
+PASS   M4   your tests catch a fault in AC2             caught by test_exactly_120_minutes_is_allowed
+PASS   M5   your tests catch a fault in AC3             caught by test_blocked_room_is_rejected
+PASS   M6   your tests catch a fault in AC4             caught by test_existing_unchanged_after_accepted_request, test_fits_exactly_between_two_bookings, test_touching_end_is_allowed and 1 more
+PASS   M7   your tests catch a fault in AC4             caught by test_conflict_only_with_last_entry_of_unsorted_list, test_existing_unchanged_after_rejected_request
+PASS   M8   your tests catch a fault in AC4             caught by test_containing_existing_is_rejected
+PASS   M9   your tests catch a fault in AC5             caught by test_existing_unchanged_after_accepted_request
+PASS   M10  your tests catch a fault in AC5             caught by test_existing_unchanged_after_accepted_request, test_existing_unchanged_after_rejected_request
+PASS   L1   report 1: tool, model and language          tool, model and language recorded
+PASS   L2   report 2: the plan, and what you corrected  plan pasted, 6 row(s) on what you corrected or verified
+PASS   L3   report 3: v1 mapped to AC1-AC4              6 conditions mapped, AC1-AC4 all present
+PASS   L4   report 4: at least 11 of your tests listed  19 tests listed
+PASS   L5   report 5: debugging evidence                2 row(s) of input / expected / actual
+PASS   L6   report 6: the critique, each point judged   critique pasted, 9 points judged
+PASS   L7   report 7: change log                        1 change-log row(s)
+PASS   L8   report 8.1: real output of your suite       suite output pasted
+PASS   L9   report 10: conclusion of 120-180 words      148 words
+------------------------------------------------------------------------------
+v1 (code/original/booking_v1.py): passes F1 F2 F3 F4 F5 F6 F7 F8 F9 F10 - fails nothing - identical to your final: yes
+SUMMARY pass=32 fail=0 error=0   (32 checks)
+Behaviour and shape are clean. This says nothing about the quality of your review.
 ```
 
 ### 8.3 Path B only — three faults I planted myself
@@ -307,21 +368,25 @@ The same IDs as `known_fails` in `submission.yml`. Write `none` if the run is cl
 
 | Check | Why it stays |
 | --- | --- |
-| | |
+
+No remaining FAIL or ERROR checks.
 
 ### 9.2 Outside the contract
 
 The contract says times are integers. It does not say what `can_book` does when one is not —
 `600.5`, or the string `"600"`. What does **your** function do, and why is that the right call?
 
--
+- My policy is `not-handled`: the function has no explicit checks for non-integer times.
+- I observed that `can_book(600.5, 660, 540, False, [])` returns `True`, while `can_book("600", 660, 540, False, [])` raises `TypeError` at `0 <= start`, because Python cannot order an integer and a string.
+- I keep this behaviour because the contract specifies integer times and leaves other types outside its guarantees. I do not convert inputs or promise consistent rejection of non-integer values.
 
 ### 9.3 A bound that never decides
 
 One of the bounds written in AC1 can never be the *only* reason a request is rejected. Which one,
 and why?
 
--
+- The bound is `0 <= start`. The contract guarantees `now >= 0`, and AC1 requires `start > now`. Therefore, a request satisfying the future-start condition already has `start > 0`.
+- Any negative start also violates `start > now`, so the lower bound can never be the only reason for rejection.
 
 ---
 
@@ -338,3 +403,9 @@ and why?
      side, so a booking that ends exactly when another begins was rejected." -->
 
 <!-- Write your conclusion below this line -->
+
+The overlap condition `start < e and s < end` checks that each interval starts before the other ends. Both comparisons must be true for an overlap. If bookings only touch, one comparison becomes false because the endpoints are equal, so the request is allowed.
+
+My first six tests passed, but the checker showed that they missed several faults. M9 was among those caught only after I expanded the suite. A test can confirm the correct Boolean while missing a change to `existing`. I therefore added cases that compare an unsorted list with a saved copy after accepted and rejected requests.
+
+The first implementation passed F1–F10, and the final suite passed all 19 tests, so no change to the function was needed. I chose `not-handled` for non-integer times: `600.5` returned `True`, while `'600'` raised `TypeError`. The contract guarantees integer times, so these observations did not justify adding validation.
