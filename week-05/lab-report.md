@@ -1,8 +1,8 @@
 # Week 05 — Lab report
 
-**Name:**
-**Group:**
-**Date:**
+**Name:** Abylaikhan Orynbassar
+**Group:** Monday, 16:00-19:00
+**Date:** 10.10.2026
 
 Fill in every section. **Do not delete, rename or renumber the headings** — the checker and the
 grader find your answers by them. Add rows to any table; never remove its header.
@@ -13,11 +13,11 @@ grader find your answers by them. Add rows to any table; never remove its header
 
 | | |
 | --- | --- |
-| Assistant (tool) | |
-| **Exact** model name | |
-| Language and version | |
-| Path | A / B |
-| My Week 04 declaration for touching bookings | allowed / not-allowed / did not submit |
+| Assistant (tool) | Claude |
+| **Exact** model name | claude sonnet 5.5 |
+| Language and version | Python 3.10.19 |
+| Path | A |
+| My Week 04 declaration for touching bookings | allowed |
 
 <!-- If your Week 04 model said touching bookings are NOT allowed: AC4 now says they are.
      One sentence here on what that changes in your Week 04 diagrams. This is a finding, not a penalty. -->
@@ -29,7 +29,90 @@ grader find your answers by them. Add rows to any table; never remove its header
 **The assistant's plan, pasted unedited:**
 
 ```text
-(paste here)
+Implementation Plan for can_book
+Order of checks
+
+Each check returns False immediately on failure. If all pass, return True. Cheap, constant-time checks go first, and the linear scan over existing goes last.
+
+Blocked (AC3): if blocked is True, return False.
+Range validity (AC1): require 0 <= start < end <= 1440.
+Future start (AC1): require start > now (strictly greater).
+Duration (AC2): require end - start <= 120.
+Overlap (AC4): for each (s, e) in existing, the new booking conflicts if start < e and s < end. If any conflict is found, return False.
+Otherwise return True.
+
+Because every check is a pure condition and the result is a boolean, the order doesn’t change the outcome. It only affects efficiency and readability.
+
+Assumptions
+start, end, and now are integers. The contract says so, so no type coercion or validation is needed beyond the range checks in AC1.
+existing tuples are valid, as the contract states, so s < e and both are within 0–1440. No defensive checks on them.
+existing may be empty, in which case there is no overlap.
+existing may be unsorted and may contain bookings that touch each other. A full scan is the safe approach, with no early-exit assumptions based on ordering.
+existing holds active bookings only, so no filtering by status is needed.
+Intervals are half-open [start, end), so two bookings that share only an endpoint do not conflict.
+blocked is a real Boolean, so a simple truthiness test is enough.
+The function is read-only. It iterates existing without sorting, appending, or removing, so inputs stay unchanged (AC5).
+Invalid new-booking input (for example start >= end) means False, not an exception, since AC5 says to return False otherwise.
+A booking that fails AC1 for being “in the past” (start <= now) is rejected even if it would end in the future.
+Boundary cases to test
+
+Range and time (AC1)
+
+Case	Expected	What it catches
+start=-1	False	Missing lower bound check
+start=0, end=60, now=0	False	start > now written as >=
+start=0, end=60, now=-1 is not valid input, so use start=1, end=60, now=0	True	Off-by-one on the now comparison
+start=600, end=600	False	Zero-length booking allowed by <=
+start=700, end=600	False	Reversed interval
+start=1380, end=1440, now=0	True	end <= 1440 written as <
+start=1380, end=1441	False	Missing upper bound check
+start=1439, end=1440, now=1438	True	Last-minute slot at day end
+start=600, end=660, now=600	False	start == now treated as valid
+
+Duration (AC2)
+
+Case	Expected	What it catches
+start=600, end=720 (exactly 120)	True	< written instead of <=
+start=600, end=721 (121)	False	Missing or loose duration check
+start=600, end=601 (1 minute)	True	Hidden minimum-duration rule
+
+Blocked (AC3)
+
+Case	Expected	What it catches
+Otherwise valid, blocked=True	False	Ignoring the flag
+Valid request, blocked=True, existing empty	False	Blocked check hidden behind the overlap loop
+
+Overlap (AC4)
+
+Case	Expected	What it catches
+existing=[(600, 660)], new (660, 720)	True	Touching at end treated as overlap
+existing=[(600, 660)], new (540, 600)	True	Touching at start treated as overlap
+existing=[(600, 660)], new (630, 690)	False	Partial overlap, new starts inside
+existing=[(600, 660)], new (570, 630)	False	Partial overlap, new ends inside
+existing=[(600, 660)], new (610, 650)	False	New fully inside existing
+existing=[(610, 650)], new (600, 660)	False	New fully contains existing
+existing=[(600, 660)], new (600, 660)	False	Identical interval
+existing=[(600, 660)], new (600, 661)	False	Same start, longer
+existing=[(600, 660), (720, 780)], new (660, 720)	True	Fits exactly in a gap between two bookings
+Unsorted existing=[(720, 780), (600, 660)], new (630, 690)	False	Early exit that assumes sorted input
+Conflict only with the last item in a long list	False	Loop stopping early or checking only the first item
+existing=[]	True (if all else valid)	Crash on empty list
+
+Input immutability (AC5)
+
+Case	Expected	What it catches
+Pass existing unsorted, compare to a copy afterwards	Unchanged	In-place sort() or other mutation
+
+Combined failures
+
+Case	Expected	What it catches
+Valid overlap-free request but 121 minutes long	False	Passing because only one rule was tested
+Overlapping and blocked	False	Any one rule masking another
+Notes on one test case
+
+In the range table I flagged that now=-1 is outside the contract, so the off-by-one test for start > now uses start=1, now=0. That gives the tightest valid check on the strict inequality.
+
+Ready for the next request, whether that’s the implementation or the test suite.
 ```
 
 **What the plan invented or changed.** One row for every rule in the plan that is not in the
@@ -38,12 +121,29 @@ row saying which lines of the plan you checked against which AC.
 
 | # | What the plan said | What the contract or the AC says | What I did |
 | --- | --- | --- | --- |
-| 1 | | | |
+| 1 | | Check blocked status, range, future start, duration and overlap, then return True. | Step 1 implements AC3; steps 2–3 implement AC1; step 4 implements AC2; step 5 implements AC4; step 6 implements AC5. | Checked every step. Found no invented booking restrictions. |
+| 2 | | With existing=[(600, 660)], request (540, 600) should return True because it touches the existing start. | With the lab's base now=540, AC1 rejects this request because start equals now. | Selected (570, 600) with now=540 instead, so the test isolates touching endpoints under AC4. |
+| 3 | | Requests (600, 720), (600, 721) and (600, 601) test duration. | With the base existing=[(600, 660)], all three overlap. AC4 would mask the duration check. | Selected (720, 840), (720, 841) and (720, 721) instead, keeping the other ACs satisfied. |
+| 4 | | Request (600, 660), now=600 tests a start equal to now. | With the base existing=[(600, 660)], the request also fails AC4. Part 3 requires one rejection reason per test. | Selected (540, 570), now=540 instead, avoiding overlap. |
+| 5 | | A negative start catches a missing lower-bound check. | Since now is valid and nonnegative, a negative start also violates start > now. It cannot isolate the lower bound. | Did not treat this case as proof that the lower-bound check works independently. |
+| 6 | | An overlapping and blocked request catches one rule masking another. | Either rule alone still rejects that request, so the test cannot expose a missing blocked or overlap check. | Selected separate blocked-only and overlap-only tests. |
 
 **Boundary cases the assistant suggested that I kept as tests:**
 
--
+Selected for the test suite; not yet run. Unless stated otherwise: now=540, blocked=False, existing=[(600, 660)].
 
+- Touching on either side: (570, 600) and (660, 720) → True (AC4).
+- Exactly 120 minutes: (720, 840) → True; 121 minutes: (720, 841) → False (AC2).
+- Starts now: (540, 570) → False; starts one minute later: (541, 570) → True (AC1).
+- Ends at midnight: (1380, 1440) → True; exceeds midnight: (1380, 1441) → False (AC1).
+- Zero-length: (720, 720) → False; reversed: (720, 690) → False (AC1).
+- Last minute of the day: (1439, 1440) → True (AC1).
+- Contained request: (615, 645) → False; containing request: (570, 690) → False (AC4).
+- Overlap with the last entry: (630, 690), existing=[(900, 960), (600, 660)] → False (AC4).
+- Empty list: (660, 720), existing=[] → True (AC5).
+- Compare an unsorted list of bookings with a copy before and after both an accepted and a rejected request; its contents and order must remain unchanged (AC5).
+- Blocked room: (660, 720), blocked=True → False (AC3).
+ 
 ---
 
 ## 3. Task 2 — the first version (v1), read before it was run
