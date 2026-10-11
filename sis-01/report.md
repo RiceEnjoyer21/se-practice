@@ -1,102 +1,71 @@
 # SIS #01 — Software Engineering Fundamentals, With an AI in the Loop
 
-<!--
-  This is the only file you write your report in. README.md tells you what goes where.
-
-  Rules the checker relies on:
-  - Do not delete, rename or renumber the ## headings, the ### headings, or the **Label:** words.
-  - Replace every "(write here)" and "(paste here)". None may be left when you submit.
-  - Comments like this one are ignored by the word counter. Delete them or leave them.
--->
-
 **Topic:** 1.1
-
-<!-- Exactly one of 1.1 … 1.10, e.g.  **Topic:** 1.4  -->
 
 ---
 
 ## 1. Scenario
 
-<!-- 100–150 words, labels included. One small scenario, used in every prompt and in your
-     whole answer. Anything fictional is labelled in Assumptions. -->
+**Question:** What must the customer receive beyond code to operate and maintain a university equipment booking service?
 
-**Question:** For topic 1.1, what must a customer receive beyond program code to operate and maintain a university equipment booking service?
+**Users:** Sixty students book cameras and laptops; two desk staff approve requests and record collection and return.
 
-**Users:** Sixty students request cameras and laptops; two equipment desk staff approve bookings and record collection and return.
+**Problem:** Spreadsheet bookings make availability unclear. The department needs a browser service with agreed reservation rules and a practical handover.
 
-**Problem:** A shared spreadsheet makes availability unclear, so the department wants a browser service with agreed booking rules and a reliable handover.
+**Constraints:** Delivery within four weeks; technical support limited to two staff hours per week.
 
-**Constraints:** Delivery must finish within four weeks; ongoing technical support must require no more than two staff hours per week.
+**Risk:** Concurrent bookings could allocate one item twice, leaving a student without equipment for coursework.
 
-**Risk:** Simultaneous requests could reserve the same item, leaving a student without equipment needed for coursework.
-
-**Assumptions:** The department, user numbers, current spreadsheet, equipment, intended service, deadline, support capacity and failure scenario are entirely fictional.
+**Assumptions:** All department details, user numbers, equipment, spreadsheet problems, service plans, constraints and failure risks are fictional.
 
 ## 2. Analysis
 
-<!-- 350–400 words. Your answer to the question, the trade-offs, and how it applies to your
-     scenario. Explain at least two engineering decisions and why they fit the scenario. -->
+The customer needs agreed booking rules, acceptance evidence, user guidance and an operating plan alongside the code. Sommerville includes associated documentation within software (2014, slide 7). Configuration notes are a scenario recommendation. The package must help sixty students and two desk staff use the service without depending on its original developer for every routine action.
 
-The customer should receive a defined booking service, evidence for accepting it, and a practical handover package. Sommerville includes associated documentation within software (2014, slide 7). For this fictional department, configuration notes are an additional recommendation tied to operating the browser service. Documentation should answer specific questions for sixty students and two staff members.
+The first engineering decision is to define when a request reserves equipment. The proposed policy keeps requests pending until staff approval. With an available item, two valid concurrent approval attempts for identical dates must yield one confirmation and one conflict message. The customer must approve this rule before development. It addresses double booking directly; checking an availability screen alone would not exercise concurrent approvals.
 
-The first engineering decision is to agree the reservation rule before development. The proposed rule makes student requests pending; staff approval reserves equipment. With an available item, two valid concurrent approval attempts for identical dates must yield one confirmation and one conflict message. The customer must approve this policy. It directly addresses double booking, whereas a screenshot of available cameras would not exercise conflicting approvals.
+Acceptance records should cover requests, approvals, cancellations, collection and return. For each case, identify the release, starting conditions, expected result, observed result and unresolved failures. Include cancellation followed by another request to check availability changes. Passing cases cannot establish that every defect has been removed (ISTQB, 2024, section 1.3). These checks are proposed, not executed on an implemented service.
 
-Acceptance evidence should cover requesting, approval, cancellation, collection and return. Record the release identifier, initial state, expected outcome, observed outcome and unresolved failures for each case. Include cancellation followed by a new request to check that availability changes consistently. Successful cases provide limited evidence: they do not establish that every defect has been removed (ISTQB, 2024, section 1.3). These are proposed checks, not results from an implemented system.
+The second decision is to combine concise guides with an observed handover. Students need availability, request status and collection instructions. Operators need setup, configuration, incident reporting and recovery procedures. Before acceptance, a student and both staff members must complete their tasks using the guides, with misunderstandings logged for correction. This checks whether the handover supports actual work rather than assuming that a manual guarantees independence.
 
-The second decision is to use concise guides and an observed handover instead of promising independence from written instructions alone. Students need availability, request status and collection guidance. Operators need setup, configuration, incident reporting and recovery procedures. Before acceptance, a student and both staff members must complete their tasks using the guides, with misunderstandings logged for correction. This makes usability concrete without requiring an elaborate interface.
+Accept recovery only after a sample restore into a separate environment; record the agreed data loss and recovery limits, and estimate recurring work against two weekly support hours. Choose backup frequency from those limits. Automate creation only if the hosting supports it. Hosting capabilities and staff skills remain unknown; checking that a backup file exists does not demonstrate recovery.
 
-Accept recovery only after a sample restore into a separate environment; record the agreed data loss and recovery limits, and estimate recurring work against two weekly support hours. Backup frequency should follow those limits. Automate backup creation if the selected hosting supports it; the final choice remains conditional because hosting and staff skills are unknown. Checking file existence alone is not the proposed recovery criterion.
-
-The support agreement should name an owner, an issue channel, escalation arrangements and a procedure for releasing fixes. Four weeks favour the core workflow over reminders, analytics and a separate mobile application. That choice preserves time for acceptance and handover but postpones convenience features. Two weekly support hours describe capacity, not a guaranteed incident resolution time.
+The support plan should name an owner, issue channel, escalation route and fix release procedure. Defer reminders, analytics and a separate mobile application to preserve testing and handover time within four weeks. This postpones convenience features. The support allowance describes capacity, not a guaranteed incident resolution time; the customer must accept that limitation.
 
 ## 3. Review
 
-<!-- 250–300 words. What Prompt B's critique said and what you did with it; your two source
-     checks and your two substantive revisions, each with a reason. Point at the rows of the
-     tables in section 9 ("verification row 2", "change-log row 1"). -->
+Prompt B point 1 was accepted as a request for evidence, not independent proof. Verification row 1 qualifies the documentation/configuration claim: Sommerville's slide 7 supports documentation; configuration notes remain a scenario recommendation. Verification row 2 keeps the testing limitation, supported by ISTQB section 1.3, principle 1. Neither source establishes the department's recovery needs.
 
-Prompt B point 1 was accepted as a request for evidence, rather than treated as independent proof. Verification row 1 qualifies the draft's documentation/configuration statement: Sommerville's slide 7 supports documentation, while configuration notes remain a scenario recommendation. Verification row 2 keeps the testing limitation because ISTQB section 1.3, principle 1 supports it. Neither source establishes this department's staffing or recovery needs.
+Point 2 was qualified. "Only one" allows zero confirmations; alternatively, both student requests could remain pending. The revised policy makes staff approval the reservation step and requires one confirmation and one conflict message from two valid concurrent approvals. Change-log row 1 ties that correction to double booking. Customer agreement remains necessary.
 
-Point 2 was qualified. "Only one" permits zero confirmations, and simultaneous requests might legitimately remain pending. The revised proposal therefore defines staff approval as the reservation step and specifies an available item, two valid concurrent approvals, one confirmation and one conflict message. Change-log row 1 connects this correction to the stated double booking risk; customer agreement is still needed.
+Point 3 was partly rejected and partly qualified. Backup file existence was rejected as sufficient recovery evidence. Daily frequency was qualified because acceptable data loss, hosting and recurring effort are unknown. Change-log row 2 replaces it with a sample restore, recovery limits and a workload estimate against two weekly support hours. Automation remains conditional.
 
-Point 3 was partly rejected and partly qualified. File existence was rejected as sufficient recovery evidence. Daily frequency was qualified because acceptable data loss, hosting capabilities and recurring effort are unspecified. Change-log row 2 replaces that instruction with a sample restore, recovery limits and a workload estimate. The two hour weekly support constraint explains why automation is conditional and capacity must be checked.
+Point 4 was qualified: instructions do not establish independent operation. Change-log row 3 requires a student and both staff members to complete their tasks using the guides. A manual assuming unfamiliar hosting skills is a counterexample; training or escalation may still be needed.
 
-Point 4 was qualified: a manual does not establish independent operation. Change-log row 3 requires a student and both staff members to complete their tasks using the guides. Unfamiliar hosting is a counterexample to the draft's confidence; training or escalation may still be necessary.
-
-Codex performed the source checks and prepared these decisions and revisions; the student's independent reading and final review remain unconfirmed. No product tests or usability exercises were executed. At the student's request, the first commit remains unpushed until the end, departing from README's required order.
+Codex checked the sources and prepared these decisions and revisions. The student confirmed understanding; independent reading remains unconfirmed. No product tests or usability exercises were executed. The student requested pushing only at the end, contrary to README's required order. This is disclosed rather than presented as a completed workflow step.
 
 ## 4. Conclusion
 
-<!-- 100–150 words. Your recommendation for the scenario and its main limitation. -->
+Deliver the core booking workflow with agreed reservation rules, acceptance records, concise guides, recovery instructions and named support responsibilities. Launch should require the conflict case and handover exercises to meet agreed criteria, with remaining issues recorded. Defer optional features to protect testing and handover time within four weeks.
 
-The recommended delivery is a small booking service accompanied by agreed reservation rules, acceptance records, student and operator guides, recovery instructions and a named support arrangement. Launch should depend on the conflict case and handover exercises meeting the customer's agreed criteria, with unresolved issues recorded explicitly. Keeping optional features outside the first release fits the four week deadline.
-
-The main limitation is uncertain operational capacity. Two support hours per week may be insufficient if hosting is unfamiliar or recovery requires substantial manual work. Before launch, the customer should approve recovery targets, an effort estimate and escalation arrangements. If these cannot fit the available capacity, reduce the service scope or postpone launch instead of promising reliable independent operation.
+The main limitation is uncertain operating effort. Two weekly support hours may not cover unfamiliar hosting or manual recovery. Before launch, agree recovery targets, estimate recurring work and identify escalation. If these do not fit capacity, reduce scope or postpone launch. Written instructions and successful acceptance cases cannot guarantee that staff will handle every incident independently.
 
 ## 5. Reflection
 
-<!-- 150–200 words. NOT part of the main total. Written by you, not by the assistant:
-     what helped, what you changed, what you learned. Specific beats flattering. -->
+My five initial ideas covered the product's purpose, acceptance criteria, usability, instructions and support. I supplied them in Russian and used Codex to translate them without adding ideas. They helped keep the work focused on what a customer needs beyond code.
 
-(write here)
+The draft required more precise acceptance criteria. The report now defines staff approval as the reservation step and expects one confirmation and one conflict message from two valid concurrent approvals. It also replaces checking that a backup file exists with a sample restore and recovery limits.
+
+I asked for shorter wording while retaining the assignment's word limits and complete AI exchanges. I reviewed the report and confirmed that I understand its reasoning. Source checking was delegated to Codex, so I cannot describe it as my own independent verification. I also chose to postpone pushing until the end, despite the README's earlier push requirement.
+
+The main lesson from this process is that delivery includes acceptance evidence and operational responsibility. Clear instructions still need a practical handover, and limited support capacity requires explicit trade-offs.
 
 ## 6. References
-
-<!-- Full references, one per line, each starting with "- ". Only sources you actually opened.
-     Every URL used in the verification table must also appear here. Example:
-     - Sommerville, I. (2016). Software Engineering, 10th ed., Global Edition. Pearson. Ch. 1.
--->
 
 - Sommerville, I. (2014). Ch1 introduction. Companion slides for Software Engineering, 10th edition; slides dated 30 October 2014, slides 7 and 12. https://www.slideshare.net/slideshow/ch1-introduction-42645973/42645973 . Accessed 2026-10-11.
 - International Software Testing Qualifications Board. (2024). Certified Tester Foundation Level Syllabus, v4.0.1, released 15 September 2024. Section 1.3, principle 1, p. 17. https://istqb.org/wp-content/uploads/2024/11/ISTQB_CTFL_Syllabus_v4.0.1.pdf . Accessed 2026-10-11.
 
 ## 7. Appendix A — Initial outline
-
-<!-- Written BEFORE you run Prompt A. Five points, your own words, numbered. These are the
-     "five points" you paste into Prompt A. -->
-
-<!-- The student supplied these five ideas in Russian before Prompt A; Codex translated them
-     into English without adding ideas. -->
 
 1. The customer needs to understand the purpose of the product: what problem it solves and whom it helps.
 2. Clear acceptance criteria are needed to evaluate the result and approve the work.
@@ -113,14 +82,10 @@ prompt and response texts are preserved below.
 Workflow deviation: at the student's explicit request, the first commit, e461f04, remained local
 before Prompt A; the student plans to push the branch at the end instead of before Prompt A.
 
-<!-- Complete prompts and complete responses, as text — never screenshots. Paste each inside
-     the fenced block that follows its label. If a response itself contains ``` lines, open
-     and close that block with ~~~~ instead. You may add B4, B5 … after B3 if you ran more. -->
-
 ### B1 — Draft (Prompt A)
 
 - **Tool:** Codex
-- **Model:** not displayed
+- **Model:** not displayed, free one
 - **Date:** 2026-10-11
 - **Purpose:** contextual draft
 
@@ -253,18 +218,12 @@ Hosting capabilities, staff skills, affordable recovery targets and actual suppo
 
 ### Verification table
 
-<!-- At least two complete rows. Source and locator: title + page / slide / section / chapter,
-     or title + URL + access date (YYYY-MM-DD). Decision: keep, qualify or reject — one word. -->
-
 | AI claim | Source and locator | Evidence found | Decision |
 | --- | --- | --- | --- |
 | Professional software includes documentation and configuration information as well as executable code. | Sommerville, Ch1 introduction, slides 7 and 12; https://www.slideshare.net/slideshow/ch1-introduction-42645973/42645973 ; accessed 2026-10-11. | Associated documentation is supported; the specific configuration deliverable is retained only as a scenario recommendation. | qualify |
 | Testing can reveal defects, but it cannot establish that no defects remain. | ISTQB, Certified Tester Foundation Level Syllabus v4.0.1, section 1.3, principle 1, p. 17; https://istqb.org/wp-content/uploads/2024/11/ISTQB_CTFL_Syllabus_v4.0.1.pdf ; accessed 2026-10-11. | Successful cases cannot establish that all defects have been eliminated. | keep |
 
 ### Change log
-
-<!-- At least two substantive revisions. Your final version must differ from the AI wording,
-     and the reason must say which evidence or scenario constraint made you change it. -->
 
 | AI wording / suggestion | Your final version | Reason for change |
 | --- | --- | --- |
