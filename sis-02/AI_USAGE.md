@@ -7,14 +7,14 @@ live in `report.md`, section 11 — this file is the summary, not a second copy.
 
 | Tool | Exact model / plan | Used for | Which sections and files it touched |
 | --- | --- | --- | --- |
-| Codex | not displayed | Read the assignment and draft the initial scope and assumptions before Prompt A; record this assistance | report.md section 10; AI_USAGE.md |
+| Codex (this session) | not displayed | Draft the baseline; answer Prompts A and B; review the requirements and produce the original UML sources; record this assistance | report.md sections 1, 2, 7, 10 and 11; models/original/sequence.puml; models/original/classes.puml; AI_USAGE.md |
 
 **Three parts of this assignment are yours alone. All three were written without AI assistance:** no. The assistant drafted the initial scope statement and assumptions in report.md section 10 from the supplied scenario and rules. Sections 6 and 9 have not been written yet.
 <!-- The first scope statement and initial assumptions (report.md section 10, committed BEFORE
      Prompt A), the walkthroughs (section 6) and the reflection (section 9). If "no", say exactly
      what was assisted. An honest "no" costs far less than an undisclosed "yes". -->
 
-**The files in `models/original/` are the assistant's Prompt B output, unedited:** yes / no
+**The files in `models/original/` are the assistant's Prompt B output, unedited:** yes
 
 **Every source in section 13 is one I opened and read myself:** yes / no
 
