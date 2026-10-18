@@ -7,9 +7,9 @@ live in `report.md`, section 11 — this file is the summary, not a second copy.
 
 | Tool | Exact model / plan | Used for | Which sections and files it touched |
 | --- | --- | --- | --- |
-| Codex | not displayed | Interpreting and explaining the assignment, almost every part was done with him | report.md |
+| Codex (main session and separate review agent) | not displayed | Requirements, UML drafts and revision, model critique, walkthroughs, explanation and reflection | report.md; models/sequence.puml; models/classes.puml; models/original/sequence.puml; models/original/classes.puml |
 
-**Three parts of this assignment are yours alone. All three were written without AI assistance:** yes 
+**Three parts of this assignment are yours alone. All three were written without AI assistance:** no. Codex drafted the initial scope and assumptions in section 10, performed and wrote the walkthroughs in section 6.
 <!-- The first scope statement and initial assumptions (report.md section 10, committed BEFORE
      Prompt A), the walkthroughs (section 6) and the reflection (section 9). If "no", say exactly
      what was assisted. An honest "no" costs far less than an undisclosed "yes". -->
