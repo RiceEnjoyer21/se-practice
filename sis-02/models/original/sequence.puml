@@ -1,0 +1,48 @@
+@startuml
+title Course registration - original sequence
+autonumber
+
+actor Student
+participant CatalogService
+participant RegistrationService
+participant EnrollmentRepository
+
+Student -> CatalogService : browseCatalog(semester)
+CatalogService -> EnrollmentRepository : listOfferingsWithPlaces(semester)
+EnrollmentRepository --> CatalogService : offerings(courseCode, title, offeringId, semester, availablePlaces)
+CatalogService --> Student : showCatalog(offerings)
+Student -> Student : selectOffering(offeringId)
+Student -> RegistrationService : register(studentId, offeringId)
+
+note over RegistrationService, EnrollmentRepository
+  Atomic registration is scoped to the selected offering.
+  Serialize competing requests for the same offeringId.
+  Final duplicate and capacity checks plus creation use current state.
+  Browsing and selection reserve no place.
+end note
+
+critical Atomic registration per offering (R2-R5)
+  RegistrationService -> EnrollmentRepository : duplicateExists(studentId, offeringId)
+  EnrollmentRepository --> RegistrationService : alreadyEnrolled
+  RegistrationService -> EnrollmentRepository : readCapacityAndCount(offeringId)
+  EnrollmentRepository --> RegistrationService : capacity, enrollmentCount
+
+  alt already enrolled (alreadyEnrolled = true)
+    RegistrationService --> Student : reject("already enrolled")
+  else course full (enrollmentCount >= capacity)
+    RegistrationService --> Student : reject("course full")
+  else not enrolled and places left (enrollmentCount < capacity)
+    RegistrationService -> EnrollmentRepository : createEnrollment(studentId, offeringId)
+    EnrollmentRepository --> RegistrationService : enrollmentId, updatedCount, availablePlaces
+    RegistrationService --> Student : confirmEnrollment(enrollmentId, offeringId, availablePlaces)
+  end
+end
+
+note over RegistrationService, EnrollmentRepository
+  createEnrollment creates exactly one Enrollment.
+  Its studentId and offeringId identify the linked domain objects.
+  enrollmentCount increases once on success.
+  availablePlaces = capacity - enrollmentCount.
+  Both rejections create nothing and leave count and availability unchanged.
+end note
+@enduml
