@@ -48,17 +48,20 @@ AC6: The page remains usable at desktop and narrow/mobile width and gives unders
 ## 3. Task 2 — prototype v1
 
 v1 export saved in `original/` and screenshot saved as `evidence/v1.png` **before** any cleanup
-prompt: yes / no
+prompt: yes
 
 **Bolt's list of the files/components it created, pasted unedited:**
 
 ```text
-(paste here)
+src/App.tsx — the whole app: sample data, availability logic (evaluateAvailability), and UI components (Header, VerdictCard, RoomScheduleCard, Field)
+src/index.css — added a shared .input style for form fields
 ```
 
 **What v1 does — one line per thing that works, or visibly does not:**
 
--
+- Provides a room selector, start/end time inputs, a duration display and a Check availability button.
+- Includes Science Lab A with one existing booking from 10:00 to 11:00.
+- Uses the device clock as the current time and offers a refresh button, but provides no input for supplying a different current time.
 
 **Repair prompt** (only if the first build did not run — the deck allows one, then the result is
 v1). Leave empty if you did not need it:
