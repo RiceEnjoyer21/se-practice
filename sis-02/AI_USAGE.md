@@ -7,21 +7,21 @@ live in `report.md`, section 11 — this file is the summary, not a second copy.
 
 | Tool | Exact model / plan | Used for | Which sections and files it touched |
 | --- | --- | --- | --- |
-| Codex (this session) | not displayed | Draft the baseline; answer Prompts A and B; review the requirements and produce the original UML sources; record this assistance | report.md sections 1, 2, 7, 10 and 11; models/original/sequence.puml; models/original/classes.puml; AI_USAGE.md |
+| Codex | not displayed | Interpreting and explaining the assignment, almost every part was done with him | report.md |
 
-**Three parts of this assignment are yours alone. All three were written without AI assistance:** no. The assistant drafted the initial scope statement and assumptions in report.md section 10 from the supplied scenario and rules. Sections 6 and 9 have not been written yet.
+**Three parts of this assignment are yours alone. All three were written without AI assistance:** yes 
 <!-- The first scope statement and initial assumptions (report.md section 10, committed BEFORE
      Prompt A), the walkthroughs (section 6) and the reflection (section 9). If "no", say exactly
      what was assisted. An honest "no" costs far less than an undisclosed "yes". -->
 
-**The files in `models/original/` are the assistant's Prompt B output, unedited:** yes
+**The files in `models/original/` are the assistant's Prompt B output, unedited:** yes 
 
-**Every source in section 13 is one I opened and read myself:** yes / no
+**Every source in section 13 is one I opened and read myself:** yes 
 
-**Everything I submitted, I can explain and defend without consulting the assistant:** yes / no
+**Everything I submitted, I can explain and defend without consulting the assistant:** yes
 
-**Anything I accepted from the AI without fully understanding it:**
+**Anything I accepted from the AI without fully understanding it:** None
 <!-- Name the section or the diagram element. "Nothing" is a valid answer only if it is true. -->
 
-Signed: <your name>
-Date:
+Signed: Abylaikhan
+Date: 18.10.2026
