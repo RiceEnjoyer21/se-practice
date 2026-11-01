@@ -230,7 +230,7 @@ Page columns were observed by driving the real pages (`web/original` and `web/fi
      recommendation you rejected or modified, and why; what you would improve next without
      expanding the scope. -->
 
-(write here)
+In my opinion, AI-assisted coding and vibe coding feel very different. In the Python part I wrote the contract and test cases first, so tests showed immediately if can_book was correct. In the Bolt part I got a full page very fast, but I did not control what was inside, for example it used the device clock and added things nobody asked. For reliability, the page silently used the old current time when the field was empty (issue 3). For usability, type="time" does not allow 24:00, so T8 and T9 were not testable. For security, Bolt left @supabase/supabase-js in package.json, a database client the app never uses. Review, permissions and tests stay my responsibility, because AI can be wrong and still sound confident, the agent runs commands only when I allow it, and I am the one who submits the work. I rejected the recommendation to validate existing and argument types, because my contract and assumption 1 already guarantee valid input and no AC asks for it. Next time I would add a "24:00" option for End time and a sample room with bookings 600–660 and 700–760 for T10, without changing any rule.
 
 ## 11. Appendix A — AI exchanges
 
