@@ -131,18 +131,20 @@ AC6: The page remains usable at desktop and narrow/mobile width and gives unders
 
 | Case | Name | Input | Expected | Python v1 | Python final | Page v1 | Page final |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| T1 | Touching | 660–720 | Available | True | True | | |
-| T2 | Overlap | 630–690 | Unavailable | False | False | | |
-| T3 | Blocked | 660–720, blocked | Unavailable | False | False | | |
-| T4 | Exactly 120 min | 720–840 | Available | True | True | | |
-| T5 | 121 min | 720–841 | Unavailable | False | False | | |
-| T6 | Starts now | 540–570 | Unavailable | False | False | | |
-| T7 | Reversed | 720–660 | Unavailable | False | False | | |
-| T8 | Ends at midnight | 1380–1440 | Available | True | True | | |
-| T9 | Past midnight | 1380–1441 | Unavailable | False | False | | |
-| T10 | Second booking | 720–780, existing (600–660), (700–760) | Unavailable | False | False | | |
-| T11 | Same check twice | 660–720, twice | Available | True | True | | |
-| T12 | Narrow screen | T1 at ~375 px wide | Available | n/a | n/a | | |
+| T1 | Touching | 660–720 | Available | True | True | Available | Available |
+| T2 | Overlap | 630–690 | Unavailable | False | False | Unavailable | Unavailable |
+| T3 | Blocked | 660–720, blocked | Unavailable | False | False | Unavailable | Unavailable |
+| T4 | Exactly 120 min | 720–840 | Available | True | True | Available | Available |
+| T5 | 121 min | 720–841 | Unavailable | False | False | Unavailable | Unavailable |
+| T6 | Starts now | 540–570 | Unavailable | False | False | Unavailable | Unavailable |
+| T7 | Reversed | 720–660 | Unavailable | False | False | Unavailable | Unavailable |
+| T8 | Ends at midnight | 1380–1440 | Available | True | True | Not testable | Not testable |
+| T9 | Past midnight | 1380–1441 | Unavailable | False | False | Not testable | Not testable |
+| T10 | Second booking | 720–780, existing (600–660), (700–760) | Unavailable | False | False | Not testable | Not testable |
+| T11 | Same check twice | 660–720, twice | Available | True | True | Available | Available |
+| T12 | Narrow screen | T1 at ~375 px wide | Available | n/a | n/a | Available | Available |
+
+Page columns were observed by driving the real pages (`web/original` and `web/final`, Vite dev servers) in Chrome with Playwright: select the room, fill the time inputs, press Check availability and read the verdict. For both pages the browser clock was fixed to 09:00 (= `now` 540), because v1 reads the device clock and has no way to supply it; the final also had its Current time field set to 09:00. T8 and T9: the `type="time"` input does not accept 24:00 or 24:01, so they are Not testable. T10: no sample room holds the bookings (600–660) and (700–760), so it is Not testable. T11: pressing Check twice gave Available both times. T12: 375 px wide viewport, Available, no horizontal scroll; `evidence/final-narrow.png` is that capture of the final.
 
 ## 6. Traceability
 
@@ -167,10 +169,11 @@ AC6: The page remains usable at desktop and narrow/mobile width and gives unders
 
 | # | Issue | Reproduction | Priority | Prompt / change | Retest result |
 | --- | --- | --- | --- | --- | --- |
-| 1 | (write here) | (write here) | (write here) | (write here) | (write here) |
-| 2 | (write here) | (write here) | (write here) | (write here) | (write here) |
+| 1 | Functional, AC1: v1 uses the device clock and offers no way to supply the current time, so T6 (starts now) cannot be set up. | `web/original`, Science Lab A, 11:00–12:00 at a device time after 11:00 shows Unavailable "Start time must be after the current time"; no input for 09:00 (T1, T6). | High | Week 06 Bolt prompt (Source: week-06): "…trying to supply current time 09:00 produces no way to set the current time… Make the smallest change that fixes this behavior. Preserve the other acceptance criteria." Bolt added an editable Current time field in `src/App.tsx`. | Final, Current time 09:00: T1 Available, T6 Unavailable (section 5). |
+| 2 | Code quality / scope: v1 `package.json` declares `@supabase/supabase-js`, a database client the app never imports. | Scope (AC1–AC6 exclude any database): `grep supabase web/original/package.json` finds it; no import in `web/original/src`; checker output "v1 has out-of-scope code: backend or database". | Medium | Week 06 Bolt prompt (Source: week-06): review only package.json and package-lock.json for the unnecessary @supabase dependency and remove it if AC1–AC6 stay intact. Bolt removed it. | `web/final/package.json` has no Supabase entry; W3 PASS; T1–T7 and T11 on the final unchanged. |
+| 3 | Usability, AC6: clearing the Current time field is not reported; the page silently validates against the last valid time. | AC6, T1 setup: `web/final`, Science Lab A, 11:00–12:00, empty Current time, Check: shows "Start time must be after the current time" with 23:25 (`evidence/before-1.png`). | Medium | Exchange B4 (this SIS): show Unavailable "Enter a valid current time." when the field is empty or invalid and do not fall back to the old value. `evaluateAvailability` now takes `number \| null`. | Same steps now show Unavailable "Enter a valid current time." (`evidence/after-1.png`); T1–T7 and T11 re-run on the final after the change: unchanged. |
 
-**Before / after:** `evidence/before-1.png` → `evidence/after-1.png` show issue (write here)
+**Before / after:** `evidence/before-1.png` → `evidence/after-1.png` show issue 3 (Current time cleared: silent fallback before, "Enter a valid current time." after).
 
 ## 8. Critique decisions
 
@@ -422,22 +425,26 @@ Other findings: the page shows Available/Unavailable with reasons (AC5/AC6), the
 
 ### B4
 
-- **Tool:** (write here)
-- **Model:** (write here)
-- **Date:** (write here)
-- **Stage:** (write here)
-- **Source:** (write here)
+- **Tool:** Claude Code (VS Code extension)
+- **Model:** Claude Sonnet 5.5 (claude-sonnet-5-5)
+- **Date:** 2026-11-01
+- **Stage:** Repair
+- **Source:** this SIS
 
 **Prompt:**
 
 ~~~~text
-(paste here)
+In web/final/src/App.tsx, choosing Science Lab A, 11:00-12:00 and then emptying the Current time field still evaluates against the previous valid time and shows no message, but AC6 requires understandable validation feedback and AC1 requires comparing against the supplied time. Make the smallest change that fixes this: when the Current time is empty or invalid, show Unavailable with the reason 'Enter a valid current time.' and do not fall back to the old value. Do not add features and keep AC1-AC5 unchanged.
 ~~~~
 
 **Response:**
 
 ~~~~text
-(paste here)
+Changed only web/final/src/App.tsx.
+
+1. evaluateAvailability now takes `currentMin: number | null`. After the room check, `if (currentMin === null)` it returns { kind: 'unavailable', reasons: ['Enter a valid current time.'] }. The AC1-AC4 rules below are untouched.
+2. The call site passes `suppliedCurrentMin` (the parsed value of the Current time field, null when empty) instead of `suppliedCurrentMin ?? currentMin`, and the useMemo dependency list no longer contains `currentMin`.
+The TypeScript check (tsc --noEmit) reports no errors. No new state, component or dependency was added.
 ~~~~
 
 ## 12. Appendix B — Test output
@@ -492,4 +499,7 @@ OK
 
 | Check ID or limitation | Why it stays | What I would do next |
 | --- | --- | --- |
-| (write here) | (write here) | (write here) |
+| C4: T10 on the page is Not testable (the check wants a result equal to Expected); T8 and T9 on the page (24:00 and 24:01) are Not testable too | The browser `type="time"` input stops at 23:59, so AC1's `end = 1440` cannot be entered; marked Not testable (C4 accepts this). | Offer a "24:00 (midnight)" choice for End time, without changing any rule. |
+| T10 on the page | No sample room holds the two bookings the case needs, so the case cannot be set up; marked Not testable. | Add a fictional room with bookings 600–660 and 700–760 to the sample data. |
+| Page v1 measured with a fixed browser clock | v1 reads the device clock; I fixed the browser clock to 09:00 to run the cases, so these are not results at the real device time. | None needed; the final accepts a typed current time. |
+| Final repair applied by Claude Code, not Bolt | Issue 3 was repaired in `web/final/src/App.tsx` through Claude Code (B4), so the Bolt project at the link is the Week 06 version without that change. | Re-export from Bolt if the project is continued there. |

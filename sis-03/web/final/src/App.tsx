@@ -103,9 +103,12 @@ function evaluateAvailability(
   room: Room | null,
   startMin: number | null,
   endMin: number | null,
-  currentMin: number
+  currentMin: number | null
 ): Verdict {
   if (!room) return { kind: 'unavailable', reasons: ['Select a room.'] };
+  if (currentMin === null) {
+    return { kind: 'unavailable', reasons: ['Enter a valid current time.'] };
+  }
 
   const reasons: string[] = [];
 
@@ -172,9 +175,9 @@ export default function App() {
         selectedRoom,
         startMin,
         endMin,
-        suppliedCurrentMin ?? currentMin
+        suppliedCurrentMin
       ),
-    [selectedRoom, startMin, endMin, suppliedCurrentMin, currentMin]
+    [selectedRoom, startMin, endMin, suppliedCurrentMin]
   );
 
   const duration =
