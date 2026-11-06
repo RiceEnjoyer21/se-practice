@@ -308,7 +308,14 @@ change and after restoring the correct code from section 7. Every test must pass
 is still open, leave its test failing and explain it in 9.1.
 
 ```text
-(paste here)
+ RUN  v3.2.4 C:/Users/LOQ/Desktop/SWE/se-practice/week-07/app
+
+ ✓ src/booking.test.ts (21 tests) 4ms
+
+ Test Files  1 passed (1)
+      Tests  21 passed (21)
+   Start at  01:23:11
+   Duration  799ms (transform 31ms, setup 0ms, collect 35ms, tests 4ms, environment 0ms, prepare 548ms)
 ```
 
 ---
@@ -321,18 +328,38 @@ error does not count as detection.
 
 | Trial | Intentional change | Detected / Survived | Failing test ID(s) | If it survived: why, and what you added |
 | --- | --- | --- | --- | --- |
-| M1 | Reject duration >= 120 instead of > 120 | Detected / Survived | | |
-| M2 | Treat touching endpoints as an overlap | Detected / Survived | | |
-| M3 | Remove the blocked-room rejection | Detected / Survived | | |
+| M1 | Reject duration >= 120 instead of > 120 | Detected | T06 | – |
+| M2 | Treat touching endpoints as an overlap | Detected | T01, T08, X2, AC5 | – |
+| M3 | Remove the blocked-room rejection | Detected | T13 | – |
 
 **The run of each mutant, pasted unedited.** Paste the `Tests` summary line and the failing test
 names at least:
 
 ```text
-(paste here)
+M1 (end - start >= MAX_BOOKING_MINUTES)
+ RUN  v3.2.4 C:/Users/LOQ/Desktop/SWE/se-practice/week-07/app
+   × canBook: plan T01-T14 > T06 AC2: 720-840 is exactly 120 minutes and is allowed 6ms
+ FAIL  src/booking.test.ts > canBook: plan T01-T14 > T06 AC2: 720-840 is exactly 120 minutes and is allowed
+AssertionError: expected false to be true // Object.is equality
+      Tests  1 failed | 20 passed (21)
+
+M2 (start <= b.end && end >= b.start)
+ RUN  v3.2.4 C:/Users/LOQ/Desktop/SWE/se-practice/week-07/app
+   × canBook: plan T01-T14 > T01 AC4: 660-720 touches the end of 600-660 and is allowed 7ms
+   × canBook: plan T01-T14 > T08 AC4: 570-600 touches the start of 600-660 and is allowed 0ms
+   × canBook: AC5 data is not changed > AC5: an Available request leaves the bookings equal to the copy taken before 0ms
+   × canBook: my own cases X1, X2 > X2 AC4: 660-720 between 600-660 and 720-780 touches both and is allowed 0ms
+      Tests  4 failed | 17 passed (21)
+
+M3 (line "if (blocked) return false;" removed)
+ RUN  v3.2.4 C:/Users/LOQ/Desktop/SWE/se-practice/week-07/app
+   × canBook: plan T01-T14 > T13 AC3: 660-720 in a blocked room is rejected 6ms
+ FAIL  src/booking.test.ts > canBook: plan T01-T14 > T13 AC3: 660-720 in a blocked room is rejected
+AssertionError: expected true to be false // Object.is equality
+      Tests  1 failed | 20 passed (21)
 ```
 
-All three changes reverted, and the full suite run again (section 6.3): yes / no
+All three changes reverted, and the full suite run again (section 6.3): **yes**
 
 ---
 
