@@ -1,8 +1,8 @@
 # Week 07 — Lab report
 
-**Name:**
-**Group:**
-**Date:**
+**Name:** Abylaikhan
+**Group:** Monday, 16:00-19:00
+**Date:** 07.11.2026
 
 Fill in every section. **Do not delete, rename or renumber the headings.** The checker and the
 grader find your answers by them. You can add rows to any table, but never remove its header.
@@ -14,7 +14,7 @@ grader find your answers by them. You can add rows to any table, but never remov
 | | |
 | --- | --- |
 | Project I continue (`week-06` = my Week 06 Bolt project, `starter` = the provided starter) | week-06 |
-| Bolt project link (or `not shared`, and why) | |
+| Bolt project link (or `not shared`, and why) | https://bolt.new/~/sb1-6l8letre |
 | Assistant that generated the tests (tool) | Claude (fresh chat) |
 | Exact model (with its version, or `not displayed`) | Claude Sonnet 5.5 |
 | Where I ran the tests (Bolt terminal / my computer / Codespace) | my computer |
@@ -422,4 +422,8 @@ the value you declare in `submission.yml` under `assumptions.invalid_existing_bo
      pass, M1 would have become the real behaviour." -->
 
 <!-- Write your conclusion below this line -->
-The initial suite had no incorrect expected value: every one of the 18 tests succeeded on a valid canBook. Its flaw was the absence of boundaries. T02 solely pinned start == now, meaning a flawed rule like start <= now + 1 would still succeed, and every instance apart from X2 utilized a single booking, so code that verified only bookings[0] would succeed as well. I identified both gaps by examining the suite prior to execution and by submitting the enhancement prompt despite the run being successful. E01, E02, and E04 are now shutting them down.The concluding green run indicates that 21 tests align with AC1–AC4 at the specified boundaries and detected all three mutants: M1 through T06, M2 via T01, T08, X2, and AC5, and M3 using T13. It does not demonstrate that canBook is accurate. Upon removing 0 <= start, all 21 tests remained successful, and the Available / Unavailable text along with AC6 were verified manually only in U3 and U4.A remaining limitation is that a reversed existing booking (700–650) results in true, but no AC specifies what it should return.
+The first suite had no wrong expected value: all 18 tests passed on a correct canBook. Its flaw was missing boundaries. T02 only pinned start == now, so a wrong rule like start <= now + 1 would still pass, and every case except X2 used one booking, so code that checked only bookings[0] would pass too. I found both gaps by reading the suite before running it and by sending the improvement prompt even though the run was green. E01, E02 and E04 now close them.
+
+The final green run shows that 21 tests match AC1–AC4 at the chosen boundaries and detect all three mutants: M1 by T06, M2 by T01, T08, X2 and AC5, M3 by T13. It does not show that canBook is correct. When I removed 0 <= start, all 21 tests still passed, and the Available / Unavailable text and AC6 were checked only by hand in U3 and U4.
+
+A remaining limitation: a reversed existing booking (700–650) gives true, but no AC says what it should return.
