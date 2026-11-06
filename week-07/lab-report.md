@@ -371,11 +371,11 @@ screenshot of each as `evidence/ui-1.png` … `evidence/ui-5.png`. Take **ui-4 a
 
 | # | Action | Expected observation | AC | What I observed | Pass / Fail / Not testable |
 | --- | --- | --- | --- | --- | --- |
-| U1 | Check 11:00–12:00, unblocked | Available, with the fixed sample booking | AC5 | | Pass / Fail / Not testable |
-| U2 | Enable blocked, then check again | Unavailable replaces the earlier result | AC3, AC5 | | Pass / Fail / Not testable |
-| U3 | Clear a required input and submit | Understandable validation feedback | AC6 | | Pass / Fail / Not testable |
-| U4 | Use a narrow (phone) width | Controls and result remain usable | AC6 | | Pass / Fail / Not testable |
-| U5 | Repeat the checks on the same data | Existing bookings remain unchanged | AC5 | | Pass / Fail / Not testable |
+| U1 | Check 11:00–12:00, unblocked | Available, with the fixed sample booking | AC5 | Science Lab A, current time 09:00, 11:00–12:00: green Available card, "No existing bookings were modified". The booking Chemistry Lab 10:00–11:00 is still listed. | Pass |
+| U2 | Enable blocked, then check again | Unavailable replaces the earlier result | AC3, AC5 | The page has no switch for blocked, so I selected the room that is blocked in the data (Auditorium B), same interval 11:00–12:00, and pressed Check again. The result became red Unavailable with the one reason "This room is currently blocked and cannot be booked". Its booking Maintenance 10:00–11:00 is unchanged. | Pass |
+| U3 | Clear a required input and submit | Understandable validation feedback | AC6 | Cleared Start time (shows --:--), End 12:00, pressed Check: Unavailable with "Enter a valid time interval (start before end, within 00:00–24:00)". The message is understandable but generic: it does not say that Start time is empty. | Pass |
+| U4 | Use a narrow (phone) width | Controls and result remain usable | AC6 | At about 375 px, portrait, the form is one column, Start and End sit side by side, the button is full width and the Available result is shown under the form. No horizontal scrolling. | Pass |
+| U5 | Repeat the checks on the same data | Existing bookings remain unchanged | AC5 | After repeating Available, Unavailable (blocked room) and Available again, then checking a new interval 12:00–13:00 in Science Lab A, the result is Available and the list still has only Chemistry Lab 10:00–11:00. The new interval was not added. | Pass |
 
 ---
 
