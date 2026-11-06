@@ -387,17 +387,17 @@ Use the same IDs as `known_fails` in `submission.yml`. Write `none` if the run i
 
 | Check | Why it stays |
 | --- | --- |
-| | |
+| none | The checker run is clean once the local `node_modules/` (ignored by git, never committed) is not in the folder |
 
 ### 9.2 Original and improved suites
 
 | Measure | First suite | Improved suite |
 | --- | --- | --- |
-| Executed / passed / failed | | |
-| Requirements with meaningful tests (AC IDs and gaps) | | |
-| Selected mutants detected | | |
-| Accepted / revised / rejected tests | | |
-| Remaining limitations | | |
+| Executed / passed / failed | 18 / 18 / 0 | 21 / 21 / 0 |
+| Requirements with meaningful tests (AC IDs and gaps) | AC1–AC5 had exact assertions. Gaps: no start just after or before `now` (541, 539), no overlap with only the head of a booking, no overlap with only the second booking. AC6: none | AC1–AC5, now with E01/E02 (541, 539), E03 (head overlap) and E04 (second booking only). AC6 only by the manual checks U3 and U4 |
+| Selected mutants detected | Not run against the first suite. By reading it, M1, M2 and M3 would fail on the same tests (T06, T01/T08, T13) | 3 of 3: M1 by T06, M2 by T01, T08, X2 and AC5, M3 by T13 |
+| Accepted / revised / rejected tests | 18 tests: 17 accepted for their expected values (T01–T14, X1, X2, AC5), 1 rejected (AC5 on an Unavailable request, a repeat of T09); the `it.each` layout and the fake timers were revised | 21 tests: T01–T14, AC5, X1 and X2 plus 4 accepted cases from the improvement answer. Rejected from the answer: E03–E06, E09, E10, N01, N02 and the extra AC5 case (see section 5) |
+| Remaining limitations | The `0 <= start` clause of AC1 is not tested; neither suite checks the page | I deleted `0 <= start` from `booking.ts` and all 21 tests still passed, because `start > now` rejects the same inputs when `now >= 0`. The "Available / Unavailable" text and AC6 are checked only by hand |
 
 ### 9.3 What no AC decides
 
@@ -405,7 +405,8 @@ Call your function with `bookings = [{ start: 700, end: 650 }]` (a reversed exis
 and a request of 660–720. What does it return? Does any AC say what it should return? (This is
 the value you declare in `submission.yml` under `assumptions.invalid_existing_booking`.)
 
--
+- With `bookings = [{ start: 700, end: 650 }]` and a request of 660–720, `canBook` returns **true** (I ran it). The reversed booking is treated as if it had no minutes in common with the request, because `660 < 650` is false, so the overlap test never succeeds.
+- No AC says what should happen: AC4 talks about "an existing booking" and does not say that it must be valid. Returning true means a reversed booking silently blocks nothing, which could double-book a room, so I think `false` or an error would be safer. I did not change it, because the task asks to find out what mine does. Declared as `returns-true`.
 
 ---
 
@@ -421,3 +422,4 @@ the value you declare in `submission.yml` under `assumptions.invalid_existing_bo
      pass, M1 would have become the real behaviour." -->
 
 <!-- Write your conclusion below this line -->
+The initial suite had no incorrect expected value: every one of the 18 tests succeeded on a valid canBook. Its flaw was the absence of boundaries. T02 solely pinned start == now, meaning a flawed rule like start <= now + 1 would still succeed, and every instance apart from X2 utilized a single booking, so code that verified only bookings[0] would succeed as well. I identified both gaps by examining the suite prior to execution and by submitting the enhancement prompt despite the run being successful. E01, E02, and E04 are now shutting them down.The concluding green run indicates that 21 tests align with AC1–AC4 at the specified boundaries and detected all three mutants: M1 through T06, M2 via T01, T08, X2, and AC5, and M3 using T13. It does not demonstrate that canBook is accurate. Upon removing 0 <= start, all 21 tests remained successful, and the Available / Unavailable text along with AC6 were verified manually only in U3 and U4.A remaining limitation is that a reversed existing booking (700–650) results in true, but no AC specifies what it should return.
