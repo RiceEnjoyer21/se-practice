@@ -195,6 +195,10 @@ requests* · *mocked booking function*, or your own) and the AC that decides it.
 | 4 | AC5 test with a frozen array and `structuredClone` | Not weak: calls `canBook` on an Available request (660–720) and compares bookings with a copy taken before the call | accept | AC5 |
 | 5 | Whole table: only the plan's inputs | Only valid requests: no negative start (-10–30) and no start just after `now` (541), both AC1 boundaries | revise | Add these two boundary tests to the final suite (AC1) |
 | 6 | Assistant note: "X1 and X2 are not in the reviewed table" | Wrong: both were in the prompt table; the note is about the assistant's reading, not the tests | reject | The case table of section 3 |
+| 7 | Improvement answer: E01 (541–570 true) and E02 (539–570 false) | Only valid requests: T02 pins only `start == now`, so `start < now` or `start <= now + 1` would pass | accept | AC1: start must be strictly after now; kept as E01, E02 |
+| 8 | Improvement answer: E07 (570–630) and E08 (740–770 with two bookings) | Missing boundaries: T09–T12 never hit only the head of a booking; every plan case but X2 has one booking, so a check of `bookings[0]` only would pass | accept | AC4; kept as E03 (head overlap) and E04 (second booking only) |
+| 9 | Improvement answer: E03–E06, E09, E10 and N01, N02 (negative `now`) | Duplicates of T07, T13, T01 and X2 with other numbers, or inputs outside the lab: negative `now` is not a valid time of day | reject | AC1–AC4 are already covered by T-cases; the lost check on `0 <= start` is recorded in 9.2 as a limitation |
+| 10 | Improvement answer: AC5 also on an Unavailable request, deep-frozen input | Plan asks for the Available request; the extra case repeats T09 | reject | AC5 test stays as in the plan |
 
 ---
 
@@ -230,7 +234,71 @@ The deck's improvement prompt exactly as sent, followed by the actual output fro
 paste the assistant's answer, unedited:
 
 ```text
-(paste here)
+Review this test suite against AC1–AC6 and our case table. Identify incorrect expectations, weak assertions, duplicated cases, and missing boundaries.
+
+For each proposed change, explain the requirement and the defect it could detect. Improve the tests without changing correct expectations to match buggy behavior.
+
+Use the actual failure output below. Separate test repairs from implementation fixes.
+
+ RUN  v3.2.4 C:/Users/LOQ/Desktop/SWE/se-practice/week-07/app
+
+ ✓ src/booking.test.ts (18 tests) 8ms
+
+ Test Files  1 passed (1)
+      Tests  18 passed (18)
+   Start at  01:08:57
+   Duration  3.71s (transform 35ms, setup 0ms, collect 48ms, tests 8ms, environment 0ms, prepare 3.44s)
+
+----- assistant's answer -----
+
+Before the review, one correction: the output you pasted isn’t failure output. All 18 tests passed. I rechecked every expectation against the function and none is wrong, so there is nothing to repair from a failure. A green run only shows the suite agrees with the current code. It doesn’t show the suite would catch a bug, so I reviewed it for that.
+
+I rewrote booking.test.ts. I haven’t run it, as before. The command is still npx vitest run src/booking.test.ts. No correct expectation was changed.
+
+Incorrect expectations
+None. I checked all 16 table rows and both AC5 tests against the function by hand, and each expectation matches the requirement it cites.
+
+Test repairs
+#	Change	Requirement	Defect it could detect
+1	Add E01 (539–570 → false) and E02 (541–570 → true)	AC1	T02 alone only pins start == now. A bug like start < now fails T02, but start <= now + 1 or start < now + 1 would also need E02. E01 and E02 pin both sides of the boundary.
+2	Add E07 (570–630 → false)	AC4	T09–T12 never overlap only the head of the existing booking. A wrong overlap formula such as end > b.start && end < b.end passes T09 and T11 but accepts a request overlapping the head. E07 catches it.
+3	Add E08, E09, E10 (two bookings, overlap with the second only, reversed array order)	AC4	Every table row except X2 uses one booking. X2 only passes touching intervals, so code that checks only bookings[0], or uses every instead of some, would still pass the table. E08 and E09 catch it. E10 checks order independence on the passing side.
+4	Add E03, E04 (1320–1440 true, 1319–1440 false)	AC1 and AC2	This checks the 120-minute limit and the day-end limit together. A shortcut such as using end to judge duration would be caught.
+5	Add E05 (700–1000 → false)	AC2	T07 is only 1 minute over. This case is far over the limit with no other rule failing, so a limit set too high or applied wrongly is caught.
+6	Add E06 (blocked, empty bookings → false)	AC3	T13 is blocked with an existing booking present, though it doesn’t overlap. E06 removes overlap from the picture, so a blocked check wrongly tied to the bookings list would fail here.
+7	Add N01, N02 with negative now	AC1	With now = 540, the 0 <= start clause can never be the deciding rule, because start > now rejects the same inputs first. Deleting that clause is undetectable. These two cases test it, but only if negative now is valid. They sit in their own describe so you can drop them.
+8	AC5 asserts the whole request is unchanged	AC5	The old test checked only bookings. It now checks start, end, now and blocked as well, using a deep-frozen input, a before/after comparison, and a repeat call that must return the same decision.
+9	AC5 now covers the Unavailable case as well, in one it.each	AC5	The two cases share one assertion block instead of two near-duplicate tests.
+10	Removed the Row type and row() helper	none	They did nothing and made the file harder to read. Cases are now plain objects.
+
+Duplicates
+T01 and T13 share the interval 660–720 on purpose. T01 shows it is free, and T13 shows only blocked changes the answer.
+The old Unavailable AC5 test repeated T09’s interval. It now sits in the shared it.each, so the repeat is deliberate.
+No other cases are redundant.
+
+Implementation fixes
+None are needed. These are decisions, not bugs.
+
+canBook returns only a boolean, so the page can’t say why a request was rejected. AC6 asks for understandable validation feedback. Returning a reason code, such as { ok: false, reason: 'blocked' }, would let you test AC5 and AC6 properly. This is a design change.
+The function doesn’t handle NaN, non-integer minutes, or malformed bookings, such as one with start >= end. It happens to return false for NaN start or end, but no requirement says so. I didn’t add tests for these.
+
+Open questions
+Is a negative now valid input? If not, delete the N cases. The 0 <= start clause is then redundant in the code.
+Do you approve E01–E10 and N01–N02? They are not in the reviewed table, so I kept them in separate describe blocks.
+Do you want the AC6 page tests (desktop and narrow width, validation text)? They need a component or browser test. This function can’t cover them.
+
+Mutation check
+Since you run the tests, try these edits to booking.ts one at a time. The suite should fail on each:
+
+start <= now → start < now
+> MAX → >= MAX
+start < b.end → start <= b.end
+end > b.start → end >= b.start
+bookings.some → bookings.slice(0, 1).some
+delete end <= MINUTES_IN_DAY
+delete 0 <= start
+
+The last one survives unless you keep N01 and N02. Before this review, bookings.slice(0, 1).some would also have survived.
 ```
 
 ### 6.3 The final run
