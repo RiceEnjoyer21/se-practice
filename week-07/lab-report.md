@@ -29,15 +29,16 @@ grader find your answers by them. You can add rows to any table, but never remov
 
 | | |
 | --- | --- |
-| File and function (or "inside the page component") | |
-| Its inputs | |
-| What it returned | |
-| How the page used it | |
+| File and function (or "inside the page component") | `src/App.tsx`, function `evaluateAvailability` (inside the page file) |
+| Its inputs | `room` (with `blocked` and `bookings`), `startMin`, `endMin`, `currentMin` |
+| What it returned | A `Verdict`: `{kind:'available'}` or `{kind:'unavailable', reasons: string[]}` |
+| How the page used it | `App` called it in a `useMemo` and passed the verdict to `VerdictCard`, which shows Available or the list of reasons |
 
 **What I changed to extract `canBook`.** Say which file it now lives in, what you moved, and why
 the behaviour did not change. Also say which file of the page now calls it. 40 words or more.
 
 <!-- Write below this line -->
+I created `src/booking.ts` with `canBook({ start, end, now, blocked, bookings })`. I copied the four rule conditions from `evaluateAvailability` unchanged: the AC1 interval and `start <= now` check, the AC2 `> 120` check, the AC3 blocked check and the AC4 overlap check `start < b.end && end > b.start`. They now return `false` instead of pushing messages. `evaluateAvailability` in `src/App.tsx` imports `canBook`, returns Available when it is true, and otherwise builds the reason messages as before. The conversion from HH:MM and the messages stay in the page. Behaviour is the same because the conditions are the same and only their location changed. Typecheck and build pass.
 
 ---
 

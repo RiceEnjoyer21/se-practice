@@ -8,6 +8,7 @@ import {
   CalendarClock,
   Ban,
 } from 'lucide-react';
+import { canBook } from './booking';
 
 type Booking = {
   id: string;
@@ -106,6 +107,21 @@ function evaluateAvailability(
   currentMin: number
 ): Verdict {
   if (!room) return { kind: 'unavailable', reasons: ['Select a room.'] };
+
+  // The decision itself comes from canBook; the code below only explains a rejection.
+  if (
+    startMin !== null &&
+    endMin !== null &&
+    canBook({
+      start: startMin,
+      end: endMin,
+      now: currentMin,
+      blocked: room.blocked,
+      bookings: room.bookings,
+    })
+  ) {
+    return { kind: 'available' };
+  }
 
   const reasons: string[] = [];
 
