@@ -15,10 +15,10 @@ grader find your answers by them. You can add rows to any table, but never remov
 | --- | --- |
 | Project I continue (`week-06` = my Week 06 Bolt project, `starter` = the provided starter) | week-06 |
 | Bolt project link (or `not shared`, and why) | |
-| Assistant that generated the tests (tool) | |
-| Exact model (with its version, or `not displayed`) | |
+| Assistant that generated the tests (tool) | Claude (fresh chat) |
+| Exact model (with its version, or `not displayed`) | Claude Sonnet 5.5 |
 | Where I ran the tests (Bolt terminal / my computer / Codespace) | my computer |
-| Vitest version (the `RUN  v…` line of a run) | |
+| Vitest version (the `RUN  v…` line of a run) | 3.2.4 |
 | Test command | `npx vitest run` (in `app/`) |
 
 ---
@@ -189,8 +189,12 @@ requests* · *mocked booking function*, or your own) and the AC that decides it.
 
 | # | Test or part of the suite | What is weak or wrong | Decision: accept / revise / reject | AC or reason |
 | --- | --- | --- | --- | --- |
-| 1 | | | accept / revise / reject | |
-| 2 | | | accept / revise / reject | |
+| 1 | `it.each(rows)` runs T01–T14, X1 and X2 as one table | Table-driven: the IDs do not have their own named tests, and the lab rules forbid `test.each` | revise | Split into one `test('T05 AC1: …')` per case so each ID has its own name and result (AC1–AC4 cases) |
+| 2 | `vi.useFakeTimers()`, `vi.setSystemTime(new Date(...))` | Own weakness: needless clock code; `canBook` takes `now` as a number, so the clock cannot matter, and it adds `new Date` to the tests | revise | AC1 uses the supplied `now = 540`; remove fake timers and any `Date` |
+| 3 | Expected values of T01–T14, X1, X2 | Checked each against the case table and AC1–AC4: none copies the code's output; T06 true (AC2 allows 120), T02 false (AC1 start must be after now) | accept | AC1–AC4 |
+| 4 | AC5 test with a frozen array and `structuredClone` | Not weak: calls `canBook` on an Available request (660–720) and compares bookings with a copy taken before the call | accept | AC5 |
+| 5 | Whole table: only the plan's inputs | Only valid requests: no negative start (-10–30) and no start just after `now` (541), both AC1 boundaries | revise | Add these two boundary tests to the final suite (AC1) |
+| 6 | Assistant note: "X1 and X2 are not in the reviewed table" | Wrong: both were in the prompt table; the note is about the assistant's reading, not the tests | reject | The case table of section 3 |
 
 ---
 
@@ -203,7 +207,14 @@ The **real** terminal output of the first run of the first suite, pasted unedite
 is not a run.
 
 ```text
-(paste here)
+ RUN  v3.2.4 C:/Users/LOQ/Desktop/SWE/se-practice/week-07/app
+
+ ✓ src/booking.test.ts (18 tests) 8ms
+
+ Test Files  1 passed (1)
+      Tests  18 passed (18)
+   Start at  01:08:57
+   Duration  3.71s (transform 35ms, setup 0ms, collect 48ms, tests 8ms, environment 0ms, prepare 3.44s)
 ```
 
 **Each failure, diagnosed** (the deck's table: import/runner error · assertion mismatch · result
@@ -211,7 +222,7 @@ changing per run · no tests discovered). Write `none` in the first row if nothi
 
 | Failing test | Observed failure | First check | Test repair or implementation fix? | Action taken |
 | --- | --- | --- | --- | --- |
-| | | | | |
+| none | All 18 tests passed in the first run | Ran the first suite unchanged; compared the code and the passing tests with AC1–AC4 | – (no failure) | No repair needed for correctness; the suite is still revised for style and the rules (see section 5) |
 
 ### 6.2 The improvement prompt
 
