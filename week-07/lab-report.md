@@ -79,17 +79,104 @@ five columns.
 `Vitest`, followed by the case table from section 3:
 
 ```text
-(paste here)
+Generate tests for the existing booking function using Vitest. Use AC1–AC6 and the reviewed case table below.
+
+Import the real function used by the page. Keep its code unchanged. Use fixed time and fresh fixtures. Assert exact decisions and unchanged booking data.
+
+Return the test file, run command, and AC mapping. Flag unclear requirements. We will run the tests ourselves.
+
+AC1: Accept a candidate interval only when 0 ≤ start < end ≤ 1440 and start is after the supplied current time.
+AC2: Reject a booking longer than 120 minutes.
+AC3: Reject the request when the selected room is blocked.
+AC4: Reject any interval that overlaps an existing booking; touching endpoints are allowed.
+AC5: Show a clear Available / Unavailable decision without changing the existing booking data.
+AC6: The page remains usable at desktop and narrow/mobile width and gives understandable validation feedback.
+
+Function under test (src/booking.ts, imported in the test as `import { canBook } from './booking'`):
+
+export type ExistingBooking = { start: number; end: number };
+export type BookingRequest = {
+  start: number; // minutes after midnight
+  end: number;
+  now: number;
+  blocked: boolean;
+  bookings: ExistingBooking[];
+};
+const MINUTES_IN_DAY = 1440;
+const MAX_BOOKING_MINUTES = 120;
+export function canBook({ start, end, now, blocked, bookings }: BookingRequest): boolean {
+  if (!(0 <= start && start < end && end <= MINUTES_IN_DAY)) return false;
+  if (start <= now) return false;
+  if (end - start > MAX_BOOKING_MINUTES) return false;
+  if (blocked) return false;
+  if (bookings.some((b) => start < b.end && end > b.start)) return false;
+  return true;
+}
+
+Default fixture: now = 540 (09:00), blocked = false, bookings = [{ start: 600, end: 660 }] (10:00–11:00). Use fresh data in every test. Change only what the row says.
+
+| ID | Candidate start–end / changed input | Expected | Requirement |
+| --- | --- | --- | --- |
+| T01 | 660–720 (touching after) | true | AC4 |
+| T02 | 540–570 (starts now) | false | AC1 |
+| T03 | 720–720 (zero duration) | false | AC1 |
+| T04 | 750–720 (reversed) | false | AC1 |
+| T05 | 1380–1441 (past day end) | false | AC1 |
+| T06 | 720–840 (120 minutes) | true | AC2 |
+| T07 | 720–841 (121 minutes) | false | AC2 |
+| T08 | 570–600 (touching before) | true | AC4 |
+| T09 | 630–690 (partial overlap) | false | AC4 |
+| T10 | 570–690 (contains booking) | false | AC4 |
+| T11 | 615–645 (inside booking) | false | AC4 |
+| T12 | 600–660 (identical interval) | false | AC4 |
+| T13 | 660–720, blocked = true | false | AC3 |
+| T14 | 630–690, bookings = [] | true | AC4 |
+| AC5 | an Available request; the bookings after the call equal the bookings before | true, data unchanged | AC5 |
+| X1 | 1380–1440 (ends exactly at the end of the day) | true | AC1 |
+| X2 | 660–720 with bookings = [{ start: 600, end: 660 }, { start: 720, end: 780 }] | true | AC4 |
 ```
 
 **The assistant's answer: run command, AC mapping and any unclear requirements it flagged,
 pasted unedited.** Its test file goes to `suites/first/` and is not pasted here:
 
 ```text
-(paste here)
+I wrote the tests to booking.test.ts. I haven’t run them, as you asked. Put the file next to src/booking.ts, i.e. at src/booking.test.ts, so ./booking resolves. booking.ts is untouched.
+
+Run command
+
+npx vitest run src/booking.test.ts
+
+How the file is built
+
+Fresh fixtures: makeRequest() builds new objects and a new bookings array on every call. The default is now = 540, blocked = false, bookings = [{600, 660}]. Each row changes only what it lists.
+Fixed time: canBook takes now as an argument. The tests also freeze the system clock with Vitest fake timers, so any hidden dependence on the real clock would show up.
+Exact decisions: every assertion is toBe(true) or toBe(false).
+
+AC mapping
+
+AC	Tests	What is covered
+AC1	T02, T03, T04, T05, X1	starts now, zero duration, reversed, past day end, ends exactly at 1440
+AC2	T06, T07	120 minutes passes, 121 fails
+AC3	T13	blocked room is rejected
+AC4	T01, T08, T09, T10, T11, T12, T14, X2	touching before and after, partial overlap, contains, inside, identical, no bookings, fits between two bookings
+AC5	two tests in the AC5 block	the Available case from your table, plus an Unavailable case I added. Input is frozen and compared to a deep clone before and after. The array and element references are checked too
+AC6	none	not testable here, see below
+
+Unclear requirements
+
+AC5 label: canBook returns only a boolean. The “Available / Unavailable” wording is page code I can’t see, so the tests don’t check it. I can add a component test if you share the page component or name its label function.
+AC5 “unchanged”: the tests prove canBook doesn’t mutate its input. They can’t prove the page leaves its own booking state alone after a click.
+AC6: layout and validation messages need a component or browser test (Playwright, or Vitest with Testing Library). They can’t be tested through this function. “Understandable feedback” also needs defined message text before it can be asserted.
+AC1 gaps in the table:
+There is no case for a negative start (e.g. -10–30). The code rejects it, but nothing tests it.
+There is no case for start just after now (541) or just before it (539).
+The table also doesn’t say whether a past time should get different feedback from other invalid input. canBook can’t tell the page which rule failed.
+Rejection reason: with a boolean result, the page can’t show why a request was rejected. AC6 asks for understandable feedback, so this is a design question.
+Rule order: when several rules fail at once (e.g. blocked and overlapping), the result is false either way. That is fine for the boolean, but a future reason code would need an agreed order.
+X1 and X2: these two rows are not in the reviewed table, so please confirm them.
 ```
 
-The first suite was saved to `suites/first/` **before** I changed anything in it: yes / no
+The first suite was saved to `suites/first/` **before** I changed anything in it: **yes**
 
 ---
 
