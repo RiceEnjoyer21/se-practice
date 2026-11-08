@@ -18,7 +18,7 @@ student:
   github: "RiceEnjoyer21"
 
 assistant:
-  tool: "Claude, Claude Code"
+  tool: "Claude"
   model: "Claude Sonnet 5.5"
 
 skill:
