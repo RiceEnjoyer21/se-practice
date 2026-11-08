@@ -813,12 +813,12 @@ Use the same IDs as `known_fails` in `submission.yml`. Write `none` if the run i
 
 | Check | Why it stays |
 | --- | --- |
-| | |
+| none | The last run of the checker has no FAIL and no ERROR. |
 
 ### 9.2 One limitation of AI-assisted debugging
 
 <!-- Use something that actually happened in sections 5-8. 20 words or more. -->
--
+The assistant never saw my `check()` helper, so it guessed that tests T02-T14 could fail by run order, or depend on the mutation of `bookings`. In my suite `check()` builds fresh bookings on every call, so the guess was wrong, and only running the tests showed it. A confident answer is not evidence.
 
 ---
 
@@ -833,3 +833,4 @@ Use the same IDs as `known_fails` in `submission.yml`. Write `none` if the run i
      visible after the BUG-A patch: the AC5 test had been failing for the wrong reason." -->
 
 <!-- Write your conclusion below this line -->
+The skill did not make the diagnosis more correct. Both answers found BUG-A from the T01 failure and BUG-B from reading the code, with the same one-line fixes (section 7, row "Correct root cause"). The skill changed the form: its table separated confirmed defects from hypotheses, while the answer without it stated a false claim about run order as a risk. My tests proved more than either answer. `BUG-A` and `BUG-B` failed on the provided code, and after the two fixes all 23 tests pass. The AC5 test failed for the wrong reason until BUG-A was fixed. The tests did not prove AC6, the page, or that no other bug exists.
