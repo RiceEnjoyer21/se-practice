@@ -125,3 +125,24 @@ describe('canBook: boundaries added in review', () => {
     expect(check(740, 770, { bookings })).toBe(false);
   });
 });
+
+describe('canBook: regression tests for the provided bugs', () => {
+  test('BUG-A: 780-840 touches 720-780 and 840-900 on both sides and must be Available', () => {
+    const bookings = [
+      { start: 600, end: 660 },
+      { start: 720, end: 780 },
+      { start: 840, end: 900 },
+    ];
+    expect(check(780, 840, { bookings })).toBe(true);
+  });
+
+  test('BUG-B: 720-780 touches nothing, is Available and leaves bookings unchanged', () => {
+    const bookings = [{ start: 600, end: 660 }];
+    const before = structuredClone(bookings);
+
+    const result = canBook({ start: 720, end: 780, now: 540, blocked: false, bookings });
+
+    expect(result).toBe(true);
+    expect(bookings).toEqual(before);
+  });
+});
