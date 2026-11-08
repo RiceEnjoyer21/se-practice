@@ -776,8 +776,32 @@ The BUG-A test passes after the one-line change. The full suite still has 2 fail
 The change as a diff, then the real output of the **full** suite. Every test must pass.
 
 ```text
-(paste here)
+$ git diff app/src/booking.ts
+diff --git a/week-08/app/src/booking.ts b/week-08/app/src/booking.ts
+index 2c8ef38..c9b915d 100644
+--- a/week-08/app/src/booking.ts
++++ b/week-08/app/src/booking.ts
+@@ -27,7 +27,5 @@ export function canBook({ start, end, now, blocked, bookings }: {
+   for (const b of bookings) {
+     if (start < b.end && end > b.start) return false;
+   }
+-  // keep the room's list current with the slot that was just found free
+-  bookings.push({ start, end });
+   return true;
+ }
+
+$ npx vitest run
+RUN  v3.2.4 C:/Users/LOQ/Desktop/SWE/se-practice/week-08/app
+
+ ✓ src/booking.test.ts (23 tests) 4ms
+
+ Test Files  1 passed (1)
+      Tests  23 passed (23)
+   Start at  22:34:56
+   Duration  917ms (transform 39ms, setup 0ms, collect 35ms, tests 4ms, environment 0ms, prepare 138ms)
 ```
+
+All 23 tests pass: T01-T14, AC5, X1, X2, E01-E04, and the two regression tests `BUG-A` and `BUG-B`. I deleted the `push` line and the comment above it, because the comment described the push and would be wrong without it.
 
 ---
 
