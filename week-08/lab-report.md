@@ -13,9 +13,9 @@ grader find your answers by them. You can add rows to any table, but never remov
 
 | | |
 | --- | --- |
-| Assistant I debugged with (tool) | |
-| Exact model (with its version, or `not displayed`) | |
-| Where the skill was installed (ChatGPT / Claude web / Claude Code / prompt-only simulation) | |
+| Assistant I debugged with (tool) | Claude: claude.ai web for the answer without the skill (section 5), Claude Code for the answer with the skill (section 6) |
+| Exact model (with its version, or `not displayed`) | Claude Sonnet 5.5 in both chats |
+| Where the skill was installed (ChatGPT / Claude web / Claude Code / prompt-only simulation) | Claude Code (`.claude/skills/bug-detector/SKILL.md`) |
 | Where I ran the tests (Bolt terminal / my computer / Codespace) | my computer (Windows 11, Git Bash) |
 | Vitest version (the `RUN  v…` line of a run) | 3.2.4 |
 | Language of my booking module (`ts` or `js`) — the file I copied from `buggy/` | ts (`buggy/booking.ts`) |
@@ -375,6 +375,8 @@ Screenshot of the result: `evidence/install.png`.
 
 <!-- Write below this line -->
 
+I installed the skill in Claude Code, which reads a skill from a folder. In the repository root I created `.claude\skills\bug-detector` (`New-Item -ItemType Directory -Force`) and copied my typed `week-08\skills\bug-detector\SKILL.md` into it (`Copy-Item`). Nothing was uploaded to a web page, so the ZIP above was not uploaded anywhere; it only holds the same `SKILL.md`. Claude Code showed no error, the skill appeared in its skill list, and `/bug-detector` ran it (screenshot: `evidence/install.png`). The answer without the skill came from a fresh chat in Claude web, where the skill was not installed.
+
 ---
 
 ## 5. Task 4 — without the skill
@@ -615,7 +617,7 @@ Recommended order
 Fix defect 1 first, since it is the cause of the reported failure. Fix defect 2 in the same change, then re-run the whole suite.
 ```
 
-Did the environment show that the skill was invoked? yes / no / not shown
+Did the environment show that the skill was invoked? not shown (in Claude Code the skill was installed in `.claude/skills/`; the answer follows the `defect | evidence | root cause | fix | test` table, but the chat did not display a "using bug-detector" line)
 
 ---
 
@@ -649,8 +651,125 @@ Rerun the test that was failing, then the full suite.
 The change as a diff (`git diff`, or the old and the new line), then the real run:
 
 ```text
-(paste here)
+$ git diff app/src/booking.ts
+diff --git a/week-08/app/src/booking.ts b/week-08/app/src/booking.ts
+index 7d4e4e6..2c8ef38 100644
+--- a/week-08/app/src/booking.ts
++++ b/week-08/app/src/booking.ts
+@@ -25,7 +25,7 @@ export function canBook({ start, end, now, blocked, bookings }: {
+   if (end - start > 120) return false;
+   if (blocked) return false;
+   for (const b of bookings) {
+-    if (start <= b.end && end >= b.start) return false;
++    if (start < b.end && end > b.start) return false;
+   }
+   // keep the room's list current with the slot that was just found free
+   bookings.push({ start, end });
+
+$ npx vitest run -t "BUG-A"
+RUN  v3.2.4 C:/Users/LOQ/Desktop/SWE/se-practice/week-08/app
+
+ ✓ src/booking.test.ts (23 tests | 22 skipped) 2ms
+
+ Test Files  1 passed (1)
+      Tests  1 passed | 22 skipped (23)
+   Start at  22:33:44
+   Duration  914ms (transform 31ms, setup 0ms, collect 35ms, tests 2ms, environment 0ms, prepare 93ms)
+
+$ npx vitest run   (full suite)
+RUN  v3.2.4 C:/Users/LOQ/Desktop/SWE/se-practice/week-08/app
+
+ ❯ src/booking.test.ts (23 tests | 2 failed) 11ms
+   ✓ canBook: plan T01-T14 > T01 AC4: 660-720 touches the end of 600-660 and is allowed 1ms
+   ✓ canBook: plan T01-T14 > T02 AC1: 540-570 starts exactly at now and is rejected 0ms
+   ✓ canBook: plan T01-T14 > T03 AC1: 720-720 has zero duration and is rejected 0ms
+   ✓ canBook: plan T01-T14 > T04 AC1: 750-720 is reversed and is rejected 0ms
+   ✓ canBook: plan T01-T14 > T05 AC1: 1380-1441 ends past the end of the day and is rejected 0ms
+   ✓ canBook: plan T01-T14 > T06 AC2: 720-840 is exactly 120 minutes and is allowed 0ms
+   ✓ canBook: plan T01-T14 > T07 AC2: 720-841 is 121 minutes and is rejected 0ms
+   ✓ canBook: plan T01-T14 > T08 AC4: 570-600 touches the start of 600-660 and is allowed 0ms
+   ✓ canBook: plan T01-T14 > T09 AC4: 630-690 partly overlaps 600-660 and is rejected 0ms
+   ✓ canBook: plan T01-T14 > T10 AC4: 570-690 contains 600-660 and is rejected 0ms
+   ✓ canBook: plan T01-T14 > T11 AC4: 615-645 lies inside 600-660 and is rejected 0ms
+   ✓ canBook: plan T01-T14 > T12 AC4: 600-660 is identical to the booking and is rejected 0ms
+   ✓ canBook: plan T01-T14 > T13 AC3: 660-720 in a blocked room is rejected 0ms
+   ✓ canBook: plan T01-T14 > T14 AC4: 630-690 with no bookings is allowed 0ms
+   × canBook: AC5 data is not changed > AC5: an Available request leaves the bookings equal to the copy taken before 7ms
+     → expected [ { start: 600, end: 660 }, …(1) ] to deeply equal [ { start: 600, end: 660 } ]
+   ✓ canBook: my own cases X1, X2 > X1 AC1: 1380-1440 ends exactly at the end of the day and is allowed 0ms
+   ✓ canBook: my own cases X1, X2 > X2 AC4: 660-720 between 600-660 and 720-780 touches both and is allowed 0ms
+   ✓ canBook: boundaries added in review > E01 AC1: 541-570 starts one minute after now and is allowed 0ms
+   ✓ canBook: boundaries added in review > E02 AC1: 539-570 starts before now and is rejected 0ms
+   ✓ canBook: boundaries added in review > E03 AC4: 570-630 overlaps only the head of 600-660 and is rejected 0ms
+   ✓ canBook: boundaries added in review > E04 AC4: 740-770 overlaps only the second booking and is rejected 0ms
+   ✓ canBook: regression tests for the provided bugs > BUG-A: 780-840 touches 720-780 and 840-900 on both sides and must be Available 0ms
+   × canBook: regression tests for the provided bugs > BUG-B: 720-780 touches nothing, is Available and leaves bookings unchanged 1ms
+     → expected [ { start: 600, end: 660 }, …(1) ] to deeply equal [ { start: 600, end: 660 } ]
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/booking.test.ts > canBook: AC5 data is not changed > AC5: an Available request leaves the bookings equal to the copy taken before
+AssertionError: expected [ { start: 600, end: 660 }, …(1) ] to deeply equal [ { start: 600, end: 660 } ]
+
+- Expected
++ Received
+
+  [
+    {
+      "end": 660,
+      "start": 600,
+    },
++   {
++     "end": 720,
++     "start": 660,
++   },
+  ]
+
+ ❯ src/booking.test.ts:88:22
+     86| 
+     87|     expect(result).toBe(true);
+     88|     expect(bookings).toEqual(before);
+       |                      ^
+     89|     expect(JSON.stringify(bookings)).toBe(JSON.stringify(before));
+     90|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  src/booking.test.ts > canBook: regression tests for the provided bugs > BUG-B: 720-780 touches nothing, is Available and leaves bookings unchanged
+AssertionError: expected [ { start: 600, end: 660 }, …(1) ] to deeply equal [ { start: 600, end: 660 } ]
+
+- Expected
++ Received
+
+  [
+    {
+      "end": 660,
+      "start": 600,
+    },
++   {
++     "end": 780,
++     "start": 720,
++   },
+  ]
+
+ ❯ src/booking.test.ts:146:22
+    144| 
+    145|     expect(result).toBe(true);
+    146|     expect(bookings).toEqual(before);
+       |                      ^
+    147|   });
+    148| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 21 passed (23)
+   Start at  22:33:46
+   Duration  826ms (transform 31ms, setup 0ms, collect 36ms, tests 11ms, environment 0ms, prepare 540ms)
 ```
+
+The BUG-A test passes after the one-line change. The full suite still has 2 failures, AC5 and `BUG-B`, both because of `bookings.push`. That is BUG-B, fixed in 8.2.
 
 ### 8.2 The BUG-B patch and the final run
 
