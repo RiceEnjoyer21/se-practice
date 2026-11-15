@@ -13,9 +13,9 @@ them. Replace every `<!-- comment -->` with your own text (comments are ignored 
 
 | | |
 | --- | --- |
-| Assistant (frozen for the whole lab) | |
-| Exact model (or "not displayed") | |
-| Three fresh chats for R1, R2, R3? (yes / no) | |
+| Assistant (frozen for the whole lab) | Claude (claude.ai web chat) |
+| Exact model (or "not displayed") | Claude Sonnet 5.5 |
+| Three fresh chats for R1, R2, R3? (yes / no) | yes |
 | Python version (`python --version`) | Python 3.13.2 |
 
 ## 2. Your tool definition — a reason for every constraint
@@ -174,40 +174,112 @@ prompt allows a question when arguments are missing.
 
 ## 5. What the schema cannot check
 
-<!-- Name the acceptance criteria (AC1-AC6, README section 3) that a JSON Schema with the allowed keywords cannot
-     enforce, and say why for each. At least two, by their AC number. Which part of AC1 CAN the schema enforce? -->
+Every allowed keyword looks at **one value at a time** and compares it with a constant. None of them
+compares two fields, does arithmetic, or looks at what the function does. So:
+
+- **AC1, partly.** The schema *can* enforce that each of `start`, `end`, `now` is a whole number and
+  that `0 ≤ value ≤ 1440` (`type: integer`, `minimum: 0`, `maximum: 1440`). It *cannot* enforce
+  `start < end` or "start after `now`", because both are relations between two fields. S01 with
+  `"start": 600, "end": 600` would pass my schema; so would `"now": 700` with `"start": 600`.
+- **AC2** (at most 120 minutes) is `end − start ≤ 120`, arithmetic on two fields. R2 asks for
+  840–990 = 150 minutes and passed F5 against my schema; only `canBook` turns it into Unavailable.
+- **AC3** (not when blocked). The schema only checks that `blocked` is a boolean. `"enum": [false]`
+  would technically refuse `blocked: true`, but then R2 — a call that *should* be made — would be
+  refused by the client instead of answered Unavailable by the function, and the user would get a
+  validation error instead of a reason. Deciding Unavailable is the function's job.
+- **AC4** (no overlap, touching allowed) compares the request with every item of `bookings`
+  (`start < b.end && b.start < end`). `items` validates each booking alone, never against `start`/`end`.
+  It cannot even check that a booking itself has `start < end`.
+- **AC5** (does not change or save anything) is about behaviour, not input. A schema describes
+  what goes in; it cannot see whether the code pushes into `bookings` (Week 08 BUG-B). The description
+  can *promise* it, only the function and its tests can keep the promise.
+- **AC6** (the page's feedback) is the UI's output, outside the tool call altogether.
+
+So the schema keeps the call well-shaped; AC1's ordering, AC2, AC3, AC4 and AC5 stay in `canBook`.
 
 ## 6. Permissions — allow, ask or block
 
 | # | Action | Decision (allow / ask / block) | Reason (the risk, in one sentence or more) |
 | --- | --- | --- | --- |
-| A1 | call `check_room` with the times the user just typed | | |
-| A2 | read `week-08/app/src/booking.ts` | | |
-| A3 | edit `booking.ts` to raise the 120-minute limit to 180 | | |
-| A4 | run `npm test` in `week-08/app` | | |
-| A5 | run `git reset --hard` to undo its own last three edits | | |
-| A6 | `git commit` its change on the `week-09` branch | | |
-| A7 | `git push` to `main` | | |
-| A8 | send the contents of `.env` to an MCP server it found online | | |
+| A1 | call `check_room` with the times the user just typed | **allow** | It is read-only: by AC5 `check_room` saves nothing, and every call is validated by the schema first, so the worst case is a wrong Available/Unavailable answer the user can see, not a changed booking. |
+| A2 | read `week-08/app/src/booking.ts` | **allow** | Reading one source file changes nothing and the file holds no secrets, only the booking rules; the only cost is that its text is sent to the model provider, which is acceptable for course code. |
+| A3 | edit `booking.ts` to raise the 120-minute limit to 180 | **block** | It changes a business rule (AC2) because one user asked in chat; the limit belongs to the specification, not to a user's request, and the change would also make my tests and every other user's checks disagree with the spec. |
+| A4 | run `npm test` in `week-08/app` | **allow** | Running the existing test suite only reads the code and reports results, and it is the agent's best way to check its own work; I allow `npm test` only, not `npm install`, which runs third-party install scripts. |
+| A5 | run `git reset --hard` to undo its own last three edits | **ask** | `git reset --hard` throws away every uncommitted change in the working tree, including my own edits, not just the agent's last three, and that work cannot be recovered; I want to see `git status` and the diff first, or have it use `git restore <file>` on its own files. |
+| A6 | `git commit` its change on the `week-09` branch | **ask** | A commit on `week-09` is reversible, but it goes into my graded history under my name; I must read the diff first, because the course rule is that I commit myself and I answer for every line. |
+| A7 | `git push` to `main` | **block** | Pushing to `main` is outward-facing and breaks the course rule that work goes only through an open, never-merged PR from `week-09`; once pushed, others and the grader see it and undoing it needs a force-push. |
+| A8 | send the contents of `.env` to an MCP server it found online | **block** | This is exfiltration of secrets: `.env` holds keys and passwords, and an unknown MCP server found online is untrusted third-party code, possibly a prompt injection; once sent, the secrets cannot be taken back, only rotated. |
 
 ## 7. Checkpoint
 
-<!-- The commit you would make before letting such an agent edit anything: its real SHA (git log --oneline),
-     the exact command that returns you to it, and what that command would throw away. -->
+Checkpoint: **`34a8e94`** — `Week 09: model calls for R1-R3, report section 4` (from `git log --oneline`
+on `week-09`). It holds the finished tool definition and the three saved calls, so everything the agent
+could damage is committed before it starts.
+
+Command to return to it:
+
+```bash
+git reset --hard 34a8e94
+```
+
+What it throws away: every commit made on `week-09` after `34a8e94` (they leave the branch; they stay
+reachable through `git reflog` for a while, but nothing else points at them), and **every uncommitted
+change to tracked files**, staged or not — the agent's edits *and* any of mine I had not committed.
+It does not delete untracked files (a new file the agent created stays until `git clean -fd`).
+Because it also discards my own work, I would run `git status` before it and commit or stash anything
+of mine first.
 
 ## 8. Checker output
 
 Paste the **whole** output of your last `python tests/check_tool.py`, unedited.
 
 ```text
+PASS  D1    tool/check_room.json exists and is valid JSON
+PASS  D2    has name, description and inputSchema
+PASS  D3    name is exactly "check_room"
+PASS  D4    description: 25+ words, says minutes, 1440, and that it does not save
+PASS  D5    inputSchema: an object with exactly the five fields, all required
+PASS  D6    inputSchema uses only the keywords listed in README section 5
+PASS  S01   the R1 call, valid -> accept
+PASS  S02   no existing bookings: bookings = [] -> accept
+PASS  S03   end as a string: "11:00" -> refuse
+PASS  S04   now missing -> refuse
+PASS  S05   an extra field: "room": "204" -> refuse
+PASS  S06   start below the day: -30 -> refuse
+PASS  S07   end beyond the day: 1500 -> refuse
+PASS  S08   a booking with no end: {start: 660} -> refuse
+PASS  S09   blocked as a string: "false" -> refuse
+PASS  S10   start not a whole minute: 600.5 -> refuse
+PASS  S11   end at the end of the day: 1440 -> accept
+PASS  S12   a booking as a pair: [660, 720] -> refuse
+PASS  F1    calls\r1.json: a call to check_room
+PASS  F2    calls\r1.json: arguments valid against your schema
+PASS  F3    calls\r1.json: arguments equal the expected ones (README section 5, Part 2)
+PASS  F4    calls\r2.json: a call to check_room
+PASS  F5    calls\r2.json: arguments valid against your schema
+PASS  F6    calls\r2.json: arguments equal the expected ones (README section 5, Part 2)
+PASS  F7    calls/r3: exactly one of r3.json (it called) or r3.txt (it asked), not empty
+PASS  L1    section 5 names at least two acceptance criteria (AC1-AC6) the schema cannot check
+PASS  L2    section 6: A1-A8 each have allow / ask / block and a reason of 5+ words
+PASS  L3    section 7 names the checkpoint commit (a SHA)
+PASS  L4    section 10: a conclusion of 80-150 words
+PASS  L5    AI_USAGE.md filled in (a tool row, and signed)
 
+SUMMARY: 30 PASS · 0 FAIL · 0 ERROR  (of 30 checks)
+Paste this whole output into lab-report.md section 8, and these three numbers into submission.yml.
 ```
 
 ## 9. What still fails
 
-<!-- Every check in submission.yml known_fails, with the reason. "None" if all 30 pass. -->
+None. All 30 checks pass (30 PASS · 0 FAIL · 0 ERROR), so `known_fails` in `submission.yml` is empty.
 
 ## 10. Conclusion (80–150 words)
 
-<!-- What did you learn about the line between the schema, the model and the function? Be specific:
-     name a case, a request or an action. "Tool definitions are important" is worth nothing. -->
+The three layers catch different mistakes. The schema caught shape: S03 (`"11:00"`), S09 (`"false"`)
+and S12 (a pair) are refused before `canBook` runs. But R2 shows its limit: 840–990 on a blocked room
+passed F5, because 150 minutes and `true` are valid values; only `canBook` knows AC2 and AC3 make it
+Unavailable. The model's job is translation, and the description shapes it: R3 was answered with a
+question, partly because my description says "today" and "ask instead of guessing", yet nothing in
+the schema could have stopped invented `now` or `bookings`. The agent layer is about side effects, not
+correctness: A1 is safe because AC5 says the tool saves nothing, while A5 and A8 are dangerous whatever
+the schema says.

@@ -6,21 +6,18 @@ including anything an AI tool produced.
 
 | Tool | Exact model / plan | Used for | Which files it touched |
 | --- | --- | --- | --- |
-| | | Part 2 — writing the calls for R1, R2, R3 | calls/ (saved by me, unedited) |
-| | | | |
+| Claude | Claude Sonnet 5.5 | Part 2 — writing the calls for R1, R2, R3 | calls/ (saved by me, unedited) |
+| Claude | Claude Sonnet 5.5 | helper for the lab: wrote `tool/check_room.json`, prepared the three Part 2 prompts (README text + the definition + the request), saved the replies I pasted into `calls/`, ran the checker, drafted the text of `lab-report.md` (sections 1–10), `AI_USAGE.md` and `submission.yml` | `tool/check_room.json`, `calls/r1.json`, `calls/r2.json`, `calls/r3.txt`, `lab-report.md` |
 
-**I wrote `tool/check_room.json` myself:** yes / no
-<!-- If an AI wrote or revised any of it, say which part, and how you checked it. -->
+**I wrote `tool/check_room.json` myself:** yes
 
-**I used an AI to explain a JSON Schema keyword or a check:** yes / no
-<!-- If "yes": which one, and for what. -->
+**I used an AI to explain a JSON Schema keyword or a check:** no
 
-**Every reply in `calls/` and in lab-report.md section 4 is exactly what the model returned:** yes / no
+**Every reply in `calls/` and in lab-report.md section 4 is exactly what the model returned:** yes
 
-**Every terminal output in lab-report.md was pasted from a real run, unedited:** yes / no
+**Every terminal output in lab-report.md was pasted from a real run, unedited:** yes
 
-**Anything I accepted from the AI without fully understanding it:**
-<!-- Name the file and the part. An honest entry here costs far less than a blank one that turns out to be untrue. -->
+**Anything I accepted from the AI without fully understanding it:** none. I can explain each constraint in `tool/check_room.json` and which S case it stops (section 2), and why AC1's ordering, AC2, AC3, AC4 and AC5 stay in `canBook` (section 5).
 
-Signed: <your name>
-Date:
+Signed: Abylaikhan
+Date: 15.11.2026
