@@ -1,0 +1,56 @@
+{
+  "name": "check_room",
+  "description": "Checks whether the room can be booked for one requested time slot today and answers Available or Unavailable. Every time is a whole number of minutes since midnight, from 0 to 1440 (10:00 = 600, 16:30 = 990, 24:00 = 1440). This tool only checks: it does not save, create or change any booking. A slot is available when 0 <= start < end <= 1440, start is after now, it lasts at most 120 minutes, the room is not blocked, and it does not overlap an existing booking (touching ends are fine). If the user does not give the current time, the start and end, whether the room is blocked, or the existing bookings, ask for them instead of guessing.",
+  "inputSchema": {
+    "type": "object",
+    "properties": {
+      "start": {
+        "type": "integer",
+        "minimum": 0,
+        "maximum": 1440,
+        "description": "Requested start, in whole minutes since midnight (10:00 = 600)."
+      },
+      "end": {
+        "type": "integer",
+        "minimum": 0,
+        "maximum": 1440,
+        "description": "Requested end, in whole minutes since midnight (11:00 = 660, 24:00 = 1440)."
+      },
+      "now": {
+        "type": "integer",
+        "minimum": 0,
+        "maximum": 1440,
+        "description": "The current time, in whole minutes since midnight (9:00 = 540)."
+      },
+      "blocked": {
+        "type": "boolean",
+        "description": "true if the room is blocked (for example for maintenance), otherwise false."
+      },
+      "bookings": {
+        "type": "array",
+        "description": "The bookings that already exist for the room today, each as an object with start and end in minutes since midnight. Use an empty list [] if there are none.",
+        "items": {
+          "type": "object",
+          "properties": {
+            "start": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 1440,
+              "description": "Start of an existing booking, in minutes since midnight."
+            },
+            "end": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 1440,
+              "description": "End of an existing booking, in minutes since midnight."
+            }
+          },
+          "required": ["start", "end"],
+          "additionalProperties": false
+        }
+      }
+    },
+    "required": ["start", "end", "now", "blocked", "bookings"],
+    "additionalProperties": false
+  }
+}

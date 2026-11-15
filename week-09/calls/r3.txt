@@ -1,0 +1,1 @@
+The checker only covers today's bookings, so it can't check tomorrow. Is today OK, and if so, what are the exact start and end times, the current time, whether the room is blocked, and which bookings already exist?
