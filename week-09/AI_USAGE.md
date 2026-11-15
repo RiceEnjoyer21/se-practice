@@ -7,9 +7,10 @@ including anything an AI tool produced.
 | Tool | Exact model / plan | Used for | Which files it touched |
 | --- | --- | --- | --- |
 | Claude | Claude Sonnet 5.5 | Part 2 — writing the calls for R1, R2, R3 | calls/ (saved by me, unedited) |
-| Claude | Claude Sonnet 5.5 | helper for the lab: wrote `tool/check_room.json`, prepared the three Part 2 prompts (README text + the definition + the request), saved the replies I pasted into `calls/`, ran the checker, drafted the text of `lab-report.md` (sections 1–10), `AI_USAGE.md` and `submission.yml` | `tool/check_room.json`, `calls/r1.json`, `calls/r2.json`, `calls/r3.txt`, `lab-report.md` |
+| Claude Code (VS Code extension) | Claude Opus 5.5 | helper for the lab: wrote `tool/check_room.json`, prepared the three Part 2 prompts (README text + the definition + the request), saved the replies I pasted into `calls/`, ran the checker, drafted the text of `lab-report.md` (sections 1–10), `AI_USAGE.md` and `submission.yml` | `tool/check_room.json`, `calls/r1.json`, `calls/r2.json`, `calls/r3.txt`, `lab-report.md` |
 
-**I wrote `tool/check_room.json` myself:** yes
+**I wrote `tool/check_room.json` myself:** no
+Claude Code (Claude Opus 5.5) wrote the whole definition, both the description and the inputSchema. I checked it by running `python tests/check_tool.py` (D1–D6 and S01–S12 PASS on the first run of that definition), by reading every constraint against the reasons table in lab-report.md section 2, and by the three Part 2 calls, which were all valid against it.
 
 **I used an AI to explain a JSON Schema keyword or a check:** no
 
