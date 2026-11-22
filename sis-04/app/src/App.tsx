@@ -9,67 +9,7 @@ import {
   Ban,
 } from 'lucide-react';
 import { canBook } from './booking';
-
-type Booking = {
-  id: string;
-  start: number; // minutes from 00:00
-  end: number;
-  label: string;
-};
-
-type Room = {
-  id: string;
-  name: string;
-  building: string;
-  capacity: number;
-  blocked: boolean;
-  bookings: Booking[];
-};
-
-const SAMPLE_ROOMS: Room[] = [
-  {
-    id: 'r1',
-    name: 'Engineering 101',
-    building: 'Engineering Block',
-    capacity: 40,
-    blocked: false,
-    bookings: [
-      { id: 'b1', start: 540, end: 600, label: 'CS 201 Lecture' },
-      { id: 'b2', start: 720, end: 780, label: 'Faculty Meeting' },
-    ],
-  },
-  {
-    id: 'r2',
-    name: 'Science Lab A',
-    building: 'Science Block',
-    capacity: 24,
-    blocked: false,
-    bookings: [
-      { id: 'b3', start: 600, end: 660, label: 'Chemistry Lab' },
-    ],
-  },
-  {
-    id: 'r3',
-    name: 'Library Study Room',
-    building: 'Main Library',
-    capacity: 8,
-    blocked: false,
-    bookings: [
-      { id: 'b4', start: 840, end: 900, label: 'Book Club' },
-      { id: 'b5', start: 960, end: 1020, label: 'Research Group' },
-    ],
-  },
-  {
-    id: 'r4',
-    name: 'Auditorium B',
-    building: 'Arts Center',
-    capacity: 120,
-    blocked: true, // AC3: blocked room
-    bookings: [
-      { id: 'b6', start: 600, end: 660, label: 'Maintenance' },
-    ],
-  },
-];
+import { ROOMS, type Room } from './rooms';
 
 const MINUTES_IN_DAY = 1440;
 const MAX_BOOKING_MINUTES = 120;
@@ -159,7 +99,7 @@ function evaluateAvailability(
 }
 
 export default function App() {
-  const [rooms] = useState<Room[]>(SAMPLE_ROOMS);
+  const [rooms] = useState<Room[]>(ROOMS);
   const [currentMin, setCurrentMin] = useState(() => {
     const now = new Date();
     return now.getHours() * 60 + now.getMinutes();
@@ -230,7 +170,7 @@ export default function App() {
                   <option value="">Select a room…</option>
                   {rooms.map((r) => (
                     <option key={r.id} value={r.id}>
-                      {r.name} — {r.building}
+                      {r.name} — {r.capacity} seats
                       {r.blocked ? ' (blocked)' : ''}
                     </option>
                   ))}
@@ -456,7 +396,7 @@ function RoomScheduleCard({
         )}
       </div>
       <p className="mt-1 text-sm text-slate-500">
-        {room.building} · capacity {room.capacity}
+        capacity {room.capacity} · {room.equipment.join(', ')}
       </p>
 
       <h4 className="mt-5 text-xs font-semibold uppercase tracking-wide text-slate-400">
@@ -473,7 +413,7 @@ function RoomScheduleCard({
               const past = b.end <= currentMin;
               return (
                 <li
-                  key={b.id}
+                  key={`${b.start}-${b.end}`}
                   className="flex items-center justify-between px-3 py-2.5 text-sm"
                 >
                   <span className="text-slate-700">{b.label}</span>
