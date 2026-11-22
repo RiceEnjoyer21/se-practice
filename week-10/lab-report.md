@@ -1,8 +1,8 @@
 # Week 10 — Lab report
 
-**Name:**
+**Name:** Abylaikhan Orynbassar
 **Group:**
-**Date:**
+**Date:** 22 November 2026
 
 Fill in every section. **Do not delete, rename or renumber the headings.** The checker and the
 grader find your answers by them. You can add rows to any table, but never remove its header.
@@ -1009,16 +1009,18 @@ its files and its commands.
 
 | Rule | What I require |
 | --- | --- |
-| Isolation | |
-| Permitted files | |
-| Commands | |
-| Prohibited actions | |
-| Required evidence | |
-| Before merging or deploying | |
+| Isolation | Its own branch `agent/<task>` cut from `week-10` at a recorded commit, in a separate `git worktree`; no push to `week-10` or `main`, no access to my other branches, no credentials or tokens in its environment, no network except `npm install` from the lockfile |
+| Permitted files | Only `week-10/app/src/booking.ts`, `week-10/app/src/booking.test.ts` and `week-10/app/src/App.tsx`, plus a note in `week-10/lab-report.md` §4.1 when it adds or changes a risk; `package.json`, `package-lock.json`, `AGENTS.md`, `provided/` and `tests/` are read-only |
+| Commands | `npm ci`, `npm test` (= `vitest run`), `npm run typecheck`, `npm run lint`, `npm run build`; `npm run dev` only on localhost; nothing else, and never `npm install <package>` |
+| Prohibited actions | No deployment (no `netlify`, `vercel`, `npm run preview` exposed with `--host`), no login, database or backend, no real names or KBTU data in `SAMPLE_ROOMS`, no `.env` or keys, no new dependencies, no deleting, skipping (`.skip`/`.only`) or weakening an existing assertion, no force-push or rewriting history |
+| Required evidence | The full `git diff` against the start commit; the real, unedited output of `npm test` (all 24+ passing), `npm run typecheck`, `npm run lint` and `npm run build`; a list of changed files with one line each on why; the register rows it touched; and a note naming every check it did not run. A claim without a recorded tool execution counts as not done |
+| Before merging or deploying | I read the diff line by line, re-run `npm test` and `python tests/check_audit.py` myself on the branch, and re-check the UI at desktop and phone width for AC6; only then do I merge by hand into `week-10`. Nothing is deployed at all: a release is a human decision outside this project's scope |
 
 ### 9.2 Optional — the deck's checklist prompt (not graded)
 
 <!-- If you sent it: the answer, and one thing it has that your rules in 9.1 do not, or the reverse. -->
+
+Not sent.
 
 ### 9.3 Checks I am keeping as FAIL or ERROR
 
@@ -1026,13 +1028,13 @@ Use the same IDs as `known_fails` in `submission.yml`. Write `none` if the run i
 
 | Check | Why it stays |
 | --- | --- |
-| | |
+| none | The final run of `python tests/check_audit.py` (after deleting the local, git-ignored `app/node_modules/` and `app/dist/`) reports 31 PASS, 0 FAIL, 0 ERROR |
 
 ---
 
 ## 10. Release decision and conclusion
 
-**Decision:** GO / CONDITIONAL / NO-GO
+**Decision:** CONDITIONAL
 
 <!-- Keep one word above. GO is not allowed while any confirmed risk still scores 6 or more.
      Then 80-150 words, in your own words, without the assistant: why this decision, from the
@@ -1044,3 +1046,12 @@ Use the same IDs as `known_fails` in `submission.yml`. Write `none` if the run i
      but no test covers App.tsx, so a regression there would be invisible." -->
 
 <!-- Write your conclusion below this line -->
+
+CONDITIONAL. The two confirmed risks that scored highest are closed and verified. R1, the playbook
+that told an agent to deploy with `netlify --prod`, add Supabase and invert AC4, fell from 3 x 3 = 9 to
+1 x 3 = 3 with the approved nine-line patch; every C1-C6 check passes. R2, the second copy of the rules
+that could show Available, fell from 6 to 3: the R2 test failed before the refactor and all 24 tests
+pass after it. No confirmed risk is at 6 or more, but limitations remain. R3, four rooms instead of one,
+is open and owned by me. R5 stays: no CI or hooks, so nothing runs these checks automatically. No
+test renders `App.tsx`; the UI was checked only by hand at two widths. And `.bolt/prompt` is still an
+unpatched instruction file.
