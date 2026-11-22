@@ -302,25 +302,55 @@ L271 and L311 | New filter inputs could easily forget it, which would leave a st
 
 ### 8.2 Exchange 2
 
-**Tool and model:** (write here)
-**Date:** (write here)
-**Purpose:** (write here)
+**Tool and model:** Claude Code (VS Code extension), a fresh agent with no history, Claude Opus 5.5 (claude-opus-5-5)
+**Date:** 2026-11-22
+**Purpose:** tests (Task 4), step 4 of the plan: a draft of `filter.test.ts` for `filterRooms` (F1, F2, F4, B5, B6, INT), written before `src/filter.ts` existed
 
 **Prompt:**
 
 ```text
-(paste here)
+Write a Vitest test file src/filter.test.ts (TypeScript) for a function that does not exist yet:
+export function filterRooms(rooms: Room[], criteria: { attendees: number; equipment: string[] }): Room[]
+in src/filter.ts. Room = { id, name, capacity, equipment: string[], blocked, bookings: {start,end}[] }.
+Rules: F1 capacity must be >= requested attendees. F2 the room must contain ALL selected equipment items. F4 when no room matches the result is empty (the page shows an empty state).
+Also checkRoom(rooms, roomId, { start, end, now }): boolean exists in src/booking.ts (true = available).
+Required tests, the ID must appear as a word in the test title: F1, F2, F4, B5 (capacity exactly equal to attendees -> included), B6 (capacity one below attendees -> excluded), INT (filterRooms then checkRoom on a room it returned).
+Rules: import from 'vitest', './filter' and './booking'; no mocks; no .skip/.only/.todo/test.each; a fixed catalog inside the test file; expected values from the rules, not from running code.
+Do not create or edit any files. Reply with only the file content in one code block.
 ```
 
 **Output used:**
 
 ```text
-(paste here)
+const CATALOG: TestRoom[] = [
+  { id: 'a', name: 'Room A', capacity: 10, equipment: ['projector', 'whiteboard'], blocked: false, […] },
+  { id: 'b', name: 'Room B', capacity: 20, equipment: ['whiteboard'], […] },
+  { id: 'c', name: 'Room C', capacity: 30, equipment: ['projector', 'whiteboard', 'microphone'], blocked: true, […] },
+  { id: 'd', name: 'Room D', capacity: 5, equipment: ['computers'], […] },
+];
+[…]
+  it('F1: keeps only rooms whose capacity is at least the requested attendees', () => {
+    const result = filterRooms(CATALOG, { attendees: 15, equipment: [] });
+    expect(ids(result)).toEqual(['b', 'c']);
+  });
+  it('F2: keeps only rooms that contain ALL selected equipment items', () => {
+    const result = filterRooms(CATALOG, { attendees: 1, equipment: ['projector', 'whiteboard'] });
+    // b has whiteboard but no projector, d has neither -> both excluded
+    expect(ids(result)).toEqual(['a', 'c']);
+  });
+[…]
+  it('INT: a room returned by filterRooms can then be checked for availability with checkRoom', () => {
+    const result = filterRooms(CATALOG, { attendees: 8, equipment: ['projector'] });
+    expect(ids(result)).toEqual(['a', 'c']);
+    const roomA = result.find((r) => r.id === 'a');
+    expect(roomA).toBeDefined();
+    expect(checkRoom(CATALOG, roomA!.id, { start: 660, end: 720, now: 540 })).toBe(true);
+[…]
 ```
 
-**Problems found:** (write here)
-**Changes made:** (write here)
-**Verified by:** (write here)
+**Problems found:** The INT test called `checkRoom(CATALOG, …)` on the whole catalog, not on the list that `filterRooms` returned, so it never proved that the two work together: a room that was filtered out could still be "available". The catalog was one shared `const`, so a `filterRooms` that sorted or mutated it would leak into later tests, and no test checked that the input stays unchanged.
+**Changes made:** I worked out every expected id list by hand from F1/F2 before running anything (15 attendees → b(20), c(30); projector+whiteboard → a, c; 20 → b, c; 21 → c). INT now calls `checkRoom(result, …)` and adds a case for the filtered-out room `b` → false. The catalog became a `catalog()` function, and I added the `F1 F2: filterRooms leaves the catalog and the criteria unchanged` test. B5/B6 titles also carry F1.
+**Verified by:** `npx vitest run` before `src/filter.ts` existed: "Cannot find module './filter'", `Test Files 1 failed | 1 passed (2)`; after adding it: `Tests 38 passed (38)`, and `npx tsc --noEmit -p tsconfig.app.json` clean
 
 ### 8.3 Exchange 3
 
