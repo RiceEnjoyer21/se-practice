@@ -1,0 +1,47 @@
+' diagrams/after.puml — the final code, sis-04/app/src: one box per module or component, one arrow per import
+@startuml
+title After: data, rules, filtering and UI separated
+package "data" {
+  component "rooms.ts\nRoom, ROOMS, EQUIPMENT" as Rooms
+}
+package "rules" {
+  component "booking.ts\ncanBook(), checkRoom(), whyUnavailable()" as Booking
+  component "filter.ts\nfilterRooms()" as Filter
+}
+package "UI" {
+  component "main.tsx" as Main
+  component "App.tsx" as App
+  component "time.ts\ntoMinutes(), fromMinutes()" as Time
+  component "components/Header.tsx" as Header
+  component "components/Field.tsx" as Field
+  component "components/RoomFilter.tsx" as RoomFilter
+  component "components/RoomList.tsx" as RoomList
+  component "components/VerdictCard.tsx" as VerdictCard
+  component "components/RoomScheduleCard.tsx" as Schedule
+}
+package "tests" {
+  component "booking.test.ts" as BookingTest
+  component "filter.test.ts" as FilterTest
+}
+Main --> App
+App --> Booking : checkRoom(), whyUnavailable()
+App --> Filter : filterRooms()
+App --> Rooms : ROOMS, EQUIPMENT
+App --> Time
+App --> Header
+App --> Field
+App --> RoomFilter
+App --> RoomList
+App --> VerdictCard
+App --> Schedule
+Filter ..> Rooms : Room type
+RoomList ..> Rooms : Room type
+Schedule ..> Rooms : Room type
+VerdictCard ..> Booking : RoomVerdict type
+RoomFilter --> Field
+Header --> Time
+Schedule --> Time
+BookingTest --> Booking
+FilterTest --> Filter
+FilterTest --> Booking : checkRoom() (INT)
+@enduml
