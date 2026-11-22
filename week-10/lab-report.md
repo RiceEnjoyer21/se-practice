@@ -1,7 +1,7 @@
 # Week 10 — Lab report
 
 **Name:** Abylaikhan Orynbassar
-**Group:**
+**Group:** Monday, 16:00-19:00
 **Date:** 22 November 2026
 
 Fill in every section. **Do not delete, rename or renumber the headings.** The checker and the
