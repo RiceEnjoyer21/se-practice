@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest';
-import { canBook } from './booking';
+import { canBook, checkRoom } from './booking';
 import type { BookingRequest } from './booking';
 
 // Default fixture: now = 09:00 (540), room open, one booking 10:00-11:00.
@@ -144,5 +144,55 @@ describe('canBook: regression tests for the provided bugs', () => {
 
     expect(result).toBe(true);
     expect(bookings).toEqual(before);
+  });
+});
+
+// A fixed catalog for checkRoom, separate from the page's ROOMS, so demo data cannot change a result.
+// now = 09:00 (540) in every request below.
+function catalog() {
+  return [
+    { id: 'a', name: 'Room A', capacity: 10, equipment: ['projector'], blocked: false, bookings: [{ start: 600, end: 660 }] },
+    { id: 'b', name: 'Room B', capacity: 20, equipment: ['whiteboard'], blocked: false, bookings: [] },
+    { id: 'c', name: 'Room C', capacity: 30, equipment: ['projector', 'whiteboard'], blocked: true, bookings: [] },
+  ];
+}
+
+describe('checkRoom: the chosen room decides', () => {
+  test('B1 AC2: exactly 120 minutes (720-840) in room B is available', () => {
+    expect(checkRoom(catalog(), 'b', { start: 720, end: 840, now: 540 })).toBe(true);
+  });
+
+  test('B2 AC2: 121 minutes (720-841) in room B is rejected', () => {
+    expect(checkRoom(catalog(), 'b', { start: 720, end: 841, now: 540 })).toBe(false);
+  });
+
+  test('B3 AC4: 660-720 touches the 600-660 booking of room A and is available', () => {
+    expect(checkRoom(catalog(), 'a', { start: 660, end: 720, now: 540 })).toBe(true);
+  });
+
+  test('B4 AC4: 630-690 overlaps the 600-660 booking of room A and is rejected', () => {
+    expect(checkRoom(catalog(), 'a', { start: 630, end: 690, now: 540 })).toBe(false);
+  });
+
+  test('F3 AC3: blocked room C with no bookings is never available', () => {
+    expect(checkRoom(catalog(), 'c', { start: 720, end: 780, now: 540 })).toBe(false);
+  });
+
+  test('F5: the same 600-660 request is unavailable in room A and available in room B', () => {
+    const request = { start: 600, end: 660, now: 540 };
+    expect(checkRoom(catalog(), 'a', request)).toBe(false);
+    expect(checkRoom(catalog(), 'b', request)).toBe(true);
+  });
+
+  test('F5: an unknown room id is not available', () => {
+    expect(checkRoom(catalog(), 'zzz', { start: 720, end: 780, now: 540 })).toBe(false);
+  });
+
+  test('AC5: checkRoom leaves the whole catalog unchanged', () => {
+    const rooms = catalog();
+    const before = structuredClone(rooms);
+    checkRoom(rooms, 'a', { start: 660, end: 720, now: 540 });
+    checkRoom(rooms, 'a', { start: 630, end: 690, now: 540 });
+    expect(rooms).toEqual(before);
   });
 });

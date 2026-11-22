@@ -22,3 +22,17 @@ export function canBook({ start, end, now, blocked, bookings }: BookingRequest):
   }
   return true;
 }
+
+export type RoomLike = { id: string; blocked: boolean; bookings: ExistingBooking[] };
+
+// F3, F5: the availability of ONE room, decided by canBook with that room's own blocked flag
+// and bookings. An unknown id is not available. Nothing is changed (AC5).
+export function checkRoom(
+  rooms: RoomLike[],
+  roomId: string,
+  request: { start: number; end: number; now: number },
+): boolean {
+  const room = rooms.find((r) => r.id === roomId);
+  if (!room) return false;
+  return canBook({ ...request, blocked: room.blocked, bookings: room.bookings });
+}
