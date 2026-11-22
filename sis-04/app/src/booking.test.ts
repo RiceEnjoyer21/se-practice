@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest';
-import { canBook, checkRoom } from './booking';
+import { canBook, checkRoom, whyUnavailable } from './booking';
 import type { BookingRequest } from './booking';
 
 // Default fixture: now = 09:00 (540), room open, one booking 10:00-11:00.
@@ -194,5 +194,40 @@ describe('checkRoom: the chosen room decides', () => {
     checkRoom(rooms, 'a', { start: 660, end: 720, now: 540 });
     checkRoom(rooms, 'a', { start: 630, end: 690, now: 540 });
     expect(rooms).toEqual(before);
+  });
+});
+
+describe('whyUnavailable: checkRoom decides, the reasons only explain', () => {
+  test('AC5: an available request in room B is available and has no reasons', () => {
+    const request = { start: 720, end: 780, now: 540 };
+    expect(checkRoom(catalog(), 'b', request)).toBe(true);
+    expect(whyUnavailable(catalog(), 'b', request)).toEqual([]);
+  });
+
+  test('AC3 F3: blocked room C is unavailable and the reason names the block', () => {
+    const request = { start: 720, end: 780, now: 540 };
+    expect(checkRoom(catalog(), 'c', request)).toBe(false);
+    expect(whyUnavailable(catalog(), 'c', request)).toEqual(['This room is currently blocked and cannot be booked.']);
+  });
+
+  test('AC4: 630-690 in room A is unavailable because of the overlap only', () => {
+    const request = { start: 630, end: 690, now: 540 };
+    expect(checkRoom(catalog(), 'a', request)).toBe(false);
+    expect(whyUnavailable(catalog(), 'a', request)).toEqual(['The interval overlaps an existing booking.']);
+  });
+
+  test('AC1 AC2: 500-700 in room B starts in the past and is too long, both reasons', () => {
+    const request = { start: 500, end: 700, now: 540 };
+    expect(checkRoom(catalog(), 'b', request)).toBe(false);
+    expect(whyUnavailable(catalog(), 'b', request)).toEqual([
+      'Start time must be after the current time.',
+      'Booking length cannot exceed 120 minutes.',
+    ]);
+  });
+
+  test('F5: an unknown room id is unavailable with a select-a-room reason', () => {
+    const request = { start: 720, end: 780, now: 540 };
+    expect(checkRoom(catalog(), 'zzz', request)).toBe(false);
+    expect(whyUnavailable(catalog(), 'zzz', request)).toEqual(['Select a room.']);
   });
 });

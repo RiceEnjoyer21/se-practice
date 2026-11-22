@@ -1,154 +1,62 @@
 import { useMemo, useState } from 'react';
-import {
-  Clock,
-  DoorClosed,
-  CheckCircle2,
-  XCircle,
-  AlertTriangle,
-  CalendarClock,
-  Ban,
-} from 'lucide-react';
-import { canBook } from './booking';
-import { ROOMS, type Room } from './rooms';
+import { CheckCircle2 } from 'lucide-react';
+import { checkRoom, whyUnavailable, type RoomVerdict } from './booking';
+import { filterRooms } from './filter';
+import { EQUIPMENT, ROOMS } from './rooms';
+import { deviceTime, fromMinutes, toMinutes } from './time';
+import { Field } from './components/Field';
+import { Header } from './components/Header';
+import { RoomFilter } from './components/RoomFilter';
+import { RoomScheduleCard } from './components/RoomScheduleCard';
+import { VerdictCard } from './components/VerdictCard';
 
-const MINUTES_IN_DAY = 1440;
-const MAX_BOOKING_MINUTES = 120;
-
-function toMinutes(time: string): number | null {
-  const m = /^(\d{1,2}):(\d{2})$/.exec(time.trim());
-  if (!m) return null;
-  const h = Number(m[1]);
-  const mm = Number(m[2]);
-  if (h < 0 || h > 23 || mm < 0 || mm > 59) return null;
-  return h * 60 + mm;
-}
-
-function fromMinutes(mins: number): string {
-  const h = Math.floor(mins / 60);
-  const m = mins % 60;
-  return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
-}
-
-type Verdict =
-  | { kind: 'available' }
-  | { kind: 'unavailable'; reasons: string[] };
-
-type Violation =
-  | 'invalid-interval'
-  | 'start-not-future'
-  | 'too-long'
-  | 'room-blocked'
-  | 'overlap';
-
-function evaluateAvailability(
-  room: Room | null,
-  startMin: number | null,
-  endMin: number | null,
-  currentMin: number
-): Verdict {
-  if (!room) return { kind: 'unavailable', reasons: ['Select a room.'] };
-
-  // The decision itself comes from canBook; the code below only explains a rejection.
-  if (
-    startMin !== null &&
-    endMin !== null &&
-    canBook({
-      start: startMin,
-      end: endMin,
-      now: currentMin,
-      blocked: room.blocked,
-      bookings: room.bookings,
-    })
-  ) {
-    return { kind: 'available' };
-  }
-
-  const reasons: string[] = [];
-
-  // AC1: valid interval and start after current time
-  if (
-    startMin === null ||
-    endMin === null ||
-    !(0 <= startMin && startMin < endMin && endMin <= MINUTES_IN_DAY)
-  ) {
-    reasons.push('Enter a valid time interval (start before end, within 00:00–24:00).');
-  } else {
-    if (startMin <= currentMin) {
-      reasons.push('Start time must be after the current time.');
-    }
-    // AC2: max 120 minutes
-    if (endMin - startMin > MAX_BOOKING_MINUTES) {
-      reasons.push('Booking length cannot exceed 120 minutes.');
-    }
-    // AC3: blocked room
-    if (room.blocked) {
-      reasons.push('This room is currently blocked and cannot be booked.');
-    }
-    // AC4: overlap (touching allowed)
-    const overlaps = room.bookings.some(
-      (b) => startMin < b.end && endMin > b.start
-    );
-    if (overlaps) {
-      reasons.push('The interval overlaps an existing booking.');
-    }
-  }
-
-  return reasons.length === 0
-    ? { kind: 'available' }
-    : { kind: 'unavailable', reasons };
-}
-
+// The page: state and layout only. Rooms come from rooms.ts, filtering from filter.ts,
+// every availability decision from booking.ts.
 export default function App() {
-  const [rooms] = useState<Room[]>(ROOMS);
-  const [currentMin, setCurrentMin] = useState(() => {
-    const now = new Date();
-    return now.getHours() * 60 + now.getMinutes();
-  });
-  const [currentTime, setCurrentTime] = useState(() => {
-    const now = new Date();
-    return `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
-  });
+  const [currentTime, setCurrentTime] = useState(deviceTime);
+  const [currentMin, setCurrentMin] = useState(() => toMinutes(deviceTime()) ?? 0);
+  const [attendees, setAttendees] = useState('1');
+  const [needed, setNeeded] = useState<string[]>([]);
   const [roomId, setRoomId] = useState<string>('');
   const [startTime, setStartTime] = useState('14:00');
   const [endTime, setEndTime] = useState('15:00');
   const [submitted, setSubmitted] = useState(false);
 
-  const selectedRoom = useMemo(
-    () => rooms.find((r) => r.id === roomId) ?? null,
-    [rooms, roomId]
+  // One place that drops an old result (it replaces five copied setSubmitted(false) calls).
+  const resetResult = () => setSubmitted(false);
+
+  const matching = useMemo(
+    () => filterRooms(ROOMS, { attendees: Number(attendees) || 0, equipment: needed }),
+    [attendees, needed],
   );
+  // F5: a room that the filter no longer shows is not selected any more.
+  const selectedRoom = matching.find((r) => r.id === roomId) ?? null;
 
   const startMin = toMinutes(startTime);
   const endMin = toMinutes(endTime);
-  const suppliedCurrentMin = toMinutes(currentTime);
+  const nowMin = toMinutes(currentTime) ?? currentMin;
 
-  const verdict = useMemo(
-    () =>
-      evaluateAvailability(
-        selectedRoom,
-        startMin,
-        endMin,
-        suppliedCurrentMin ?? currentMin
-      ),
-    [selectedRoom, startMin, endMin, suppliedCurrentMin, currentMin]
-  );
+  // The decision is checkRoom on the chosen room only; whyUnavailable just words the rejection.
+  let verdict: RoomVerdict = { available: false, reasons: ['Enter a start and an end time.'] };
+  if (startMin !== null && endMin !== null) {
+    const request = { start: startMin, end: endMin, now: nowMin };
+    const id = selectedRoom?.id ?? '';
+    const available = checkRoom(matching, id, request);
+    verdict = { available, reasons: available ? [] : whyUnavailable(matching, id, request) };
+  }
 
-  const duration =
-    startMin !== null && endMin !== null && endMin > startMin
-      ? endMin - startMin
-      : null;
+  const duration = startMin !== null && endMin !== null && endMin > startMin ? endMin - startMin : null;
 
   return (
     <div className="min-h-screen bg-slate-50 text-slate-800">
       <div className="mx-auto max-w-5xl px-4 py-8 sm:py-12">
-        <Header currentMin={currentMin} />
+        <Header currentMin={nowMin} />
 
         <div className="mt-8 grid grid-cols-1 gap-6 lg:grid-cols-5">
-          {/* Form panel */}
           <section className="lg:col-span-2 rounded-2xl bg-white shadow-sm ring-1 ring-slate-200 p-6">
-            <h2 className="text-lg font-semibold text-slate-900">Check availability</h2>
+            <h2 className="text-lg font-semibold text-slate-900">Find and check a room</h2>
             <p className="mt-1 text-sm text-slate-500">
-              Pick a room and a candidate time interval to see if it's available.
+              Set your requirements, pick a matching room and a time interval.
             </p>
 
             <form
@@ -158,20 +66,32 @@ export default function App() {
                 setSubmitted(true);
               }}
             >
+              <RoomFilter
+                attendees={attendees}
+                onAttendees={(value) => {
+                  setAttendees(value);
+                  resetResult();
+                }}
+                options={EQUIPMENT}
+                selected={needed}
+                onToggle={(item) => {
+                  setNeeded((list) => (list.includes(item) ? list.filter((x) => x !== item) : [...list, item]));
+                  resetResult();
+                }}
+                matchCount={matching.length}
+              />
+
               <Field label="Room">
                 <select
-                  value={roomId}
-                  onChange={(e) => {
-                    setRoomId(e.target.value);
-                    setSubmitted(false);
-                  }}
-                  className="input"
+                  value={selectedRoom?.id ?? ''}
+                  disabled={matching.length === 0}
+                  onChange={(e) => setRoomId(e.target.value)}
+                  className="input disabled:bg-slate-100"
                 >
-                  <option value="">Select a room…</option>
-                  {rooms.map((r) => (
+                  <option value="">{matching.length ? 'Select a room…' : 'No matching rooms'}</option>
+                  {matching.map((r) => (
                     <option key={r.id} value={r.id}>
-                      {r.name} — {r.capacity} seats
-                      {r.blocked ? ' (blocked)' : ''}
+                      {r.name} — {r.capacity} seats{r.blocked ? ' (blocked)' : ''}
                     </option>
                   ))}
                 </select>
@@ -185,7 +105,7 @@ export default function App() {
                     setCurrentTime(e.target.value);
                     const parsed = toMinutes(e.target.value);
                     if (parsed !== null) setCurrentMin(parsed);
-                    setSubmitted(false);
+                    resetResult();
                   }}
                   className="input"
                 />
@@ -198,7 +118,7 @@ export default function App() {
                     value={startTime}
                     onChange={(e) => {
                       setStartTime(e.target.value);
-                      setSubmitted(false);
+                      resetResult();
                     }}
                     className="input"
                   />
@@ -209,23 +129,14 @@ export default function App() {
                     value={endTime}
                     onChange={(e) => {
                       setEndTime(e.target.value);
-                      setSubmitted(false);
+                      resetResult();
                     }}
                     className="input"
                   />
                 </Field>
               </div>
 
-              {duration !== null && (
-                <p className="text-xs text-slate-500">
-                  Duration: {duration} min
-                  {duration > MAX_BOOKING_MINUTES && (
-                    <span className="ml-1 text-amber-600">
-                      (exceeds 120 min limit)
-                    </span>
-                  )}
-                </p>
-              )}
+              {duration !== null && <p className="text-xs text-slate-500">Duration: {duration} min</p>}
 
               <button
                 type="submit"
@@ -238,17 +149,14 @@ export default function App() {
 
             <div className="mt-5 rounded-lg bg-slate-50 p-3 text-xs text-slate-500">
               Current time used for validation:{' '}
-              <span className="font-medium text-slate-700">{fromMinutes(currentMin)}</span>
+              <span className="font-medium text-slate-700">{fromMinutes(nowMin)}</span>
               <button
                 type="button"
                 onClick={() => {
-                  const now = new Date();
-                  const m = now.getHours() * 60 + now.getMinutes();
-                  setCurrentMin(m);
-                  setCurrentTime(
-                    `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`
-                  );
-                  setSubmitted(false);
+                  const t = deviceTime();
+                  setCurrentTime(t);
+                  setCurrentMin(toMinutes(t) ?? 0);
+                  resetResult();
                 }}
                 className="ml-2 text-sky-600 hover:underline"
               >
@@ -257,13 +165,10 @@ export default function App() {
             </div>
           </section>
 
-          {/* Result + details panel */}
           <section className="lg:col-span-3 space-y-6">
+            {/* F5: the verdict is computed for the room selected now, so switching rooms refreshes it */}
             <VerdictCard verdict={verdict} submitted={submitted} />
-
-            {selectedRoom && (
-              <RoomScheduleCard room={selectedRoom} currentMin={currentMin} />
-            )}
+            {selectedRoom && <RoomScheduleCard room={selectedRoom} currentMin={nowMin} />}
           </section>
         </div>
 
@@ -271,165 +176,6 @@ export default function App() {
           Fictional sample data only. No bookings are actually created.
         </footer>
       </div>
-    </div>
-  );
-}
-
-function Header({ currentMin }: { currentMin: number }) {
-  return (
-    <header className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-      <div className="flex items-center gap-3">
-        <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-sky-600 text-white shadow-sm">
-          <CalendarClock className="h-6 w-6" />
-        </div>
-        <div>
-          <h1 className="text-xl font-bold text-slate-900 sm:text-2xl">
-            Smart Campus Room Availability
-          </h1>
-          <p className="text-sm text-slate-500">
-            Check whether a campus room is free for your time slot.
-          </p>
-        </div>
-      </div>
-      <div className="inline-flex items-center gap-2 self-start rounded-lg bg-white px-3 py-2 text-sm font-medium text-slate-600 shadow-sm ring-1 ring-slate-200 sm:self-auto">
-        <Clock className="h-4 w-4 text-sky-600" />
-        {fromMinutes(currentMin)}
-      </div>
-    </header>
-  );
-}
-
-function Field({
-  label,
-  children,
-}: {
-  label: string;
-  children: React.ReactNode;
-}) {
-  return (
-    <label className="block">
-      <span className="mb-1 block text-sm font-medium text-slate-700">{label}</span>
-      {children}
-    </label>
-  );
-}
-
-function VerdictCard({
-  verdict,
-  submitted,
-}: {
-  verdict: Verdict;
-  submitted: boolean;
-}) {
-  if (!submitted) {
-    return (
-      <div className="rounded-2xl bg-white p-6 shadow-sm ring-1 ring-slate-200">
-        <div className="flex items-center gap-3 text-slate-400">
-          <DoorClosed className="h-6 w-6" />
-          <p className="text-sm">
-            Select a room and time, then check availability.
-          </p>
-        </div>
-      </div>
-    );
-  }
-
-  if (verdict.kind === 'available') {
-    return (
-      <div className="rounded-2xl bg-emerald-50 p-6 shadow-sm ring-1 ring-emerald-200">
-        <div className="flex items-start gap-3">
-          <CheckCircle2 className="h-7 w-7 shrink-0 text-emerald-600" />
-          <div>
-            <h3 className="text-lg font-semibold text-emerald-800">Available</h3>
-            <p className="mt-1 text-sm text-emerald-700">
-              This room is free for the requested interval. No existing bookings
-              were modified.
-            </p>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  return (
-    <div className="rounded-2xl bg-rose-50 p-6 shadow-sm ring-1 ring-rose-200">
-      <div className="flex items-start gap-3">
-        <XCircle className="h-7 w-7 shrink-0 text-rose-600" />
-        <div className="w-full">
-          <h3 className="text-lg font-semibold text-rose-800">Unavailable</h3>
-          <ul className="mt-2 space-y-1.5">
-            {verdict.reasons.map((r, i) => (
-              <li key={i} className="flex items-start gap-2 text-sm text-rose-700">
-                <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-rose-500" />
-                <span>{r}</span>
-              </li>
-            ))}
-          </ul>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function RoomScheduleCard({
-  room,
-  currentMin,
-}: {
-  room: Room;
-  currentMin: number;
-}) {
-  return (
-    <div className="rounded-2xl bg-white p-6 shadow-sm ring-1 ring-slate-200">
-      <div className="flex items-center justify-between gap-3">
-        <div className="flex items-center gap-2">
-          <DoorClosed className="h-5 w-5 text-slate-400" />
-          <h3 className="text-base font-semibold text-slate-900">{room.name}</h3>
-        </div>
-        {room.blocked ? (
-          <span className="inline-flex items-center gap-1 rounded-full bg-rose-100 px-2.5 py-0.5 text-xs font-medium text-rose-700">
-            <Ban className="h-3 w-3" /> Blocked
-          </span>
-        ) : (
-          <span className="inline-flex items-center gap-1 rounded-full bg-emerald-100 px-2.5 py-0.5 text-xs font-medium text-emerald-700">
-            Open
-          </span>
-        )}
-      </div>
-      <p className="mt-1 text-sm text-slate-500">
-        capacity {room.capacity} · {room.equipment.join(', ')}
-      </p>
-
-      <h4 className="mt-5 text-xs font-semibold uppercase tracking-wide text-slate-400">
-        Existing bookings
-      </h4>
-      {room.bookings.length === 0 ? (
-        <p className="mt-2 text-sm text-slate-500">No existing bookings today.</p>
-      ) : (
-        <ul className="mt-2 divide-y divide-slate-100 rounded-lg ring-1 ring-slate-100">
-          {room.bookings
-            .slice()
-            .sort((a, b) => a.start - b.start)
-            .map((b) => {
-              const past = b.end <= currentMin;
-              return (
-                <li
-                  key={`${b.start}-${b.end}`}
-                  className="flex items-center justify-between px-3 py-2.5 text-sm"
-                >
-                  <span className="text-slate-700">{b.label}</span>
-                  <span
-                    className={`font-mono text-xs ${
-                      past ? 'text-slate-400' : 'text-slate-600'
-                    }`}
-                  >
-                    {fromMinutes(b.start)} – {fromMinutes(b.end)}
-                    {past && ' · ended'}
-                  </span>
-                </li>
-              );
-            })}
-        </ul>
-      )}
     </div>
   );
 }

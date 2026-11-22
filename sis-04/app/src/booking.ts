@@ -36,3 +36,36 @@ export function checkRoom(
   if (!room) return false;
   return canBook({ ...request, blocked: room.blocked, bookings: room.bookings });
 }
+
+// The explanation for the page. The DECISION is checkRoom (canBook); the reasons below only say
+// why a rejected request was rejected, so the page never re-implements a rule of its own.
+function rejectionReasons({ start, end, now, blocked, bookings }: BookingRequest): string[] {
+  if (!(0 <= start && start < end && end <= MINUTES_IN_DAY)) {
+    return ['Enter a valid time interval (start before end, within 00:00–24:00).'];
+  }
+  const reasons: string[] = [];
+  if (start <= now) reasons.push('Start time must be after the current time.');
+  if (end - start > MAX_BOOKING_MINUTES) {
+    reasons.push(`Booking length cannot exceed ${MAX_BOOKING_MINUTES} minutes.`);
+  }
+  if (blocked) reasons.push('This room is currently blocked and cannot be booked.');
+  if (bookings.some((b) => start < b.end && end > b.start)) {
+    reasons.push('The interval overlaps an existing booking.');
+  }
+  return reasons;
+}
+
+export type RoomVerdict = { available: boolean; reasons: string[] };
+
+// Why checkRoom said no, for the page. Empty when checkRoom says the room is available.
+export function whyUnavailable(
+  rooms: RoomLike[],
+  roomId: string,
+  request: { start: number; end: number; now: number },
+): string[] {
+  const room = rooms.find((r) => r.id === roomId);
+  if (!room) return ['Select a room.'];
+  if (checkRoom(rooms, roomId, request)) return [];
+  const reasons = rejectionReasons({ ...request, blocked: room.blocked, bookings: room.bookings });
+  return reasons.length ? reasons : ['Unavailable.'];
+}
