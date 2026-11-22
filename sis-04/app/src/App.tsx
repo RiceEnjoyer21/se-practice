@@ -7,6 +7,7 @@ import { deviceTime, fromMinutes, toMinutes } from './time';
 import { Field } from './components/Field';
 import { Header } from './components/Header';
 import { RoomFilter } from './components/RoomFilter';
+import { RoomList } from './components/RoomList';
 import { RoomScheduleCard } from './components/RoomScheduleCard';
 import { VerdictCard } from './components/VerdictCard';
 
@@ -81,21 +82,12 @@ export default function App() {
                 matchCount={matching.length}
               />
 
-              <Field label="Room">
-                <select
-                  value={selectedRoom?.id ?? ''}
-                  disabled={matching.length === 0}
-                  onChange={(e) => setRoomId(e.target.value)}
-                  className="input disabled:bg-slate-100"
-                >
-                  <option value="">{matching.length ? 'Select a room…' : 'No matching rooms'}</option>
-                  {matching.map((r) => (
-                    <option key={r.id} value={r.id}>
-                      {r.name} — {r.capacity} seats{r.blocked ? ' (blocked)' : ''}
-                    </option>
-                  ))}
-                </select>
-              </Field>
+              {matching.length > 0 && (
+                <div>
+                  <span className="mb-1 block text-sm font-medium text-slate-700">Room</span>
+                  <RoomList rooms={matching} selectedId={selectedRoom?.id ?? ''} onSelect={setRoomId} />
+                </div>
+              )}
 
               <Field label="Current time">
                 <input

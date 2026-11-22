@@ -1,12 +1,19 @@
-' diagrams/before.puml — the modules and components of your STARTING POINT and what depends on what.
-' Replace this stub. A component diagram is enough, for example:
-'
-'   @startuml
-'   component "App.tsx" as App
-'   component "booking.ts" as Booking
-'   App --> Booking : canBook()
-'   note right of App : rooms, times and the result all live here
-'   @enduml
-'
+' diagrams/before.puml — the starting point: week-08 (baseline commit f890f8e), sis-04/app/src
 @startuml
+title Before (week-08): the page holds the data, the rules and the UI
+component "main.tsx" as Main
+component "App.tsx" as App
+component "booking.ts\ncanBook()" as Booking
+component "booking.test.ts" as BookingTest
+Main --> App : renders
+App --> Booking : canBook()
+BookingTest --> Booking : canBook()
+note right of App
+  SAMPLE_ROOMS (4 rooms, no equipment)
+  toMinutes / fromMinutes
+  evaluateAvailability(): calls canBook,
+  then re-checks AC1-AC4 itself for reasons
+  MINUTES_IN_DAY / MAX_BOOKING_MINUTES again
+  Header, Field, VerdictCard, RoomScheduleCard
+end note
 @enduml
