@@ -13,9 +13,9 @@ grader find your answers by them. You can add rows to any table, but never remov
 
 | | |
 | --- | --- |
-| Assistant I reviewed with (tool) | |
-| Exact model (with its version, or `not displayed`) | |
-| Where the assistant read the project (Bolt.new / Claude Code / Cursor / Copilot / chat with pasted files) | |
+| Assistant I reviewed with (tool) | Claude Code |
+| Exact model (with its version, or `not displayed`) | Claude Sonnet 5.5 (`claude-sonnet-5-5`) |
+| Where the assistant read the project (Bolt.new / Claude Code / Cursor / Copilot / chat with pasted files) | Claude Code, a separate session that read the files of `week-10/app/` itself (plan mode for the review) |
 | Starting point (`week-08` or `week-07`) | week-08 |
 | Baseline commit — the checkpoint of Part 0 | d769af3 |
 | Where I ran the tests (Bolt terminal / my computer / Codespace) | my computer (Windows 11, Node + npm, Git Bash) |
@@ -553,23 +553,90 @@ index b786d88..4899bfc 100644
 
 ### 7.1 The regression test fails before the mitigation
 
-The risk it covers: **R?**. The real run, with the new test failing:
+The risk it covers: **R2**. The real run, with the new test failing:
 
 ```text
-(paste here)
+$ NO_COLOR=1 npx vitest run --reporter=verbose
+
+ RUN  v3.2.4 C:/Users/LOQ/Desktop/SWE/se-practice/week-10/app
+
+ ✓ src/booking.test.ts > canBook: plan T01-T14 > T01 AC4: 660-720 touches the end of 600-660 and is allowed 2ms
+ ✓ src/booking.test.ts > canBook: plan T01-T14 > T02 AC1: 540-570 starts exactly at now and is rejected 0ms
+ ✓ src/booking.test.ts > canBook: plan T01-T14 > T03 AC1: 720-720 has zero duration and is rejected 0ms
+ ✓ src/booking.test.ts > canBook: plan T01-T14 > T04 AC1: 750-720 is reversed and is rejected 0ms
+ ✓ src/booking.test.ts > canBook: plan T01-T14 > T05 AC1: 1380-1441 ends past the end of the day and is rejected 0ms
+ ✓ src/booking.test.ts > canBook: plan T01-T14 > T06 AC2: 720-840 is exactly 120 minutes and is allowed 0ms
+ ✓ src/booking.test.ts > canBook: plan T01-T14 > T07 AC2: 720-841 is 121 minutes and is rejected 0ms
+ ✓ src/booking.test.ts > canBook: plan T01-T14 > T08 AC4: 570-600 touches the start of 600-660 and is allowed 0ms
+ ✓ src/booking.test.ts > canBook: plan T01-T14 > T09 AC4: 630-690 partly overlaps 600-660 and is rejected 1ms
+ ✓ src/booking.test.ts > canBook: plan T01-T14 > T10 AC4: 570-690 contains 600-660 and is rejected 0ms
+ ✓ src/booking.test.ts > canBook: plan T01-T14 > T11 AC4: 615-645 lies inside 600-660 and is rejected 0ms
+ ✓ src/booking.test.ts > canBook: plan T01-T14 > T12 AC4: 600-660 is identical to the booking and is rejected 0ms
+ ✓ src/booking.test.ts > canBook: plan T01-T14 > T13 AC3: 660-720 in a blocked room is rejected 0ms
+ ✓ src/booking.test.ts > canBook: plan T01-T14 > T14 AC4: 630-690 with no bookings is allowed 0ms
+ ✓ src/booking.test.ts > canBook: AC5 data is not changed > AC5: an Available request leaves the bookings equal to the copy taken before 1ms
+ ✓ src/booking.test.ts > canBook: my own cases X1, X2 > X1 AC1: 1380-1440 ends exactly at the end of the day and is allowed 0ms
+ ✓ src/booking.test.ts > canBook: my own cases X1, X2 > X2 AC4: 660-720 between 600-660 and 720-780 touches both and is allowed 0ms
+ ✓ src/booking.test.ts > canBook: boundaries added in review > E01 AC1: 541-570 starts one minute after now and is allowed 0ms
+ ✓ src/booking.test.ts > canBook: boundaries added in review > E02 AC1: 539-570 starts before now and is rejected 0ms
+ ✓ src/booking.test.ts > canBook: boundaries added in review > E03 AC4: 570-630 overlaps only the head of 600-660 and is rejected 0ms
+ ✓ src/booking.test.ts > canBook: boundaries added in review > E04 AC4: 740-770 overlaps only the second booking and is rejected 0ms
+ ✓ src/booking.test.ts > canBook: regression tests for the provided bugs > BUG-A: 780-840 touches 720-780 and 840-900 on both sides and must be Available 0ms
+ ✓ src/booking.test.ts > canBook: regression tests for the provided bugs > BUG-B: 720-780 touches nothing, is Available and leaves bookings unchanged 0ms
+ × src/booking.test.ts > R2: the page verdict comes from the tested booking module > R2 AC5 AC6: evaluateAvailability agrees with canBook, explains each rejection and never fails open 8ms
+   → evaluate is not a function
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/booking.test.ts > R2: the page verdict comes from the tested booking module > R2 AC5 AC6: evaluateAvailability agrees with canBook, explains each rejection and never fails open
+TypeError: evaluate is not a function
+ ❯ src/booking.test.ts:179:23
+    177|     ];
+    178|     for (const [r, start, end, reason] of cases) {
+    179|       const verdict = evaluate(r, start, end, now);
+       |                       ^
+    180|       if (reason === null) {
+    181|         expect(verdict).toEqual({ kind: 'available' });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 23 passed (24)
+   Start at  21:56:18
+   Duration  2.41s (transform 84ms, setup 0ms, collect 99ms, tests 18ms, environment 1ms, prepare 1.52s)
 ```
+
+Why it fails, and why that is the evidence: the test asks the tested booking module for the page's
+verdict function. Before the mitigation `evaluateAvailability` exists only inside `src/App.tsx`, not
+exported, so `bookingModule.evaluateAvailability` is `undefined`: the logic that decides what the
+student sees has no test at all, which is R2. After the refactor the same test checks the six UI
+reasons of AC1-AC4 (AC6), that the verdict is Available exactly when `canBook` says so on a 15 x 17
+grid of requests (no fail-open), and that the bookings are unchanged (AC5). The 23 existing tests
+still pass.
 
 ### 7.2 The manual UI check
 
 | View | Width | What I checked | Result | Screenshot |
 | --- | --- | --- | --- | --- |
-| Desktop | | | | `evidence/ui-desktop.png` |
-| Mobile | | | | `evidence/ui-mobile.png` |
+| Desktop | ≈1080 px browser window (two-column `lg` layout) | Engineering 101, Current time 21:00 (shown as 09:00 PM by the browser's 12-hour locale), 12:30–13:30, "Check availability": verdict colour and icon, every reason readable, schedule card, nothing cut off or overlapping | pass: red **Unavailable** card lists two reasons, "Start time must be after the current time." (AC1) and "The interval overlaps an existing booking." (AC4, 12:00–13:00 Faculty Meeting); past bookings marked "· ended"; form and cards aligned | `evidence/ui-desktop.png` |
+| Mobile | phone width in the DevTools device toolbar (one-column layout) | Same room, Current time 09:00, 13:00–14:00 (touches the end of 12:00–13:00): stacked layout, start/end inputs side by side, full-width button, verdict card, schedule rows | pass: green **Available** card "No existing bookings were modified." (AC4 touching allowed, AC5 wording); nothing cut off or overlapping, times in the schedule fit on one line; the header is above the scrolled view, not in the screenshot | `evidence/ui-mobile.png` |
 
 ### 7.3 Tests and checks I did not run
 
 <!-- Name each one and why. "None" only if it is true. -->
--
+- **`npm run typecheck` at the failing commit:** run, and it fails on purpose:
+  `src/booking.test.ts(167,36): error TS2339: Property 'evaluateAvailability' does not exist`. It is the
+  same evidence as the red test; it is re-run after the refactor (§8.4).
+- **No automated test of the page (`App.tsx`):** there is no React Testing Library / jsdom in
+  `package.json`, and adding them is a new dependency the refactor prompt forbids. The UI is covered
+  only by the manual check in §7.2 and, after the refactor, by the R2 test of its verdict function.
+- **No end-to-end or browser test** (Playwright/Cypress): none exists, and none is installed.
+- **No coverage run** (`vitest --coverage`): `@vitest/coverage-v8` is not installed.
+- **No real phone:** the mobile check used the browser's device toolbar, not a physical device.
+- **`npm run lint`** was not part of this verification: it already fails at the baseline (3 errors, §2.1,
+  risk R5); it is re-run after the refactor.
+- **No check against the time zone or a page left open for hours** (R7): not run, the risk is accepted.
 
 ---
 

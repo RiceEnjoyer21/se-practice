@@ -1,5 +1,6 @@
 import { describe, expect, test } from 'vitest';
 import { canBook } from './booking';
+import * as bookingModule from './booking';
 import type { BookingRequest } from './booking';
 
 // Default fixture: now = 09:00 (540), room open, one booking 10:00-11:00.
@@ -144,5 +145,60 @@ describe('canBook: regression tests for the provided bugs', () => {
 
     expect(result).toBe(true);
     expect(bookings).toEqual(before);
+  });
+});
+
+describe('R2: the page verdict comes from the tested booking module', () => {
+  // R2 (register 4.1): App.tsx built its verdict from a second, untested copy of the rules and
+  // returned Available whenever that copy found no reason. The page's evaluateAvailability must
+  // live in the booking module, agree with canBook on every request and explain every rejection.
+  test('R2 AC5 AC6: evaluateAvailability agrees with canBook, explains each rejection and never fails open', () => {
+    const room = {
+      id: 'r1',
+      name: 'Room 1',
+      building: 'Fictional Block',
+      capacity: 10,
+      blocked: false,
+      bookings: [{ id: 'b1', start: 600, end: 660, label: 'Fictional booking' }],
+    };
+    const blockedRoom = { ...room, blocked: true, bookings: [...room.bookings] };
+    const before = structuredClone(room.bookings);
+    const now = 540;
+    const evaluate = bookingModule.evaluateAvailability;
+
+    // Same reasons the page showed before the refactor (AC6: clear feedback).
+    const cases: [typeof room, number, number, string | null][] = [
+      [room, 660, 720, null],
+      [room, 540, 570, 'Start time must be after the current time.'],
+      [room, 750, 720, 'Enter a valid time interval (start before end, within 00:00–24:00).'],
+      [room, 720, 841, 'Booking length cannot exceed 120 minutes.'],
+      [room, 630, 690, 'The interval overlaps an existing booking.'],
+      [blockedRoom, 660, 720, 'This room is currently blocked and cannot be booked.'],
+    ];
+    for (const [r, start, end, reason] of cases) {
+      const verdict = evaluate(r, start, end, now);
+      if (reason === null) {
+        expect(verdict).toEqual({ kind: 'available' });
+      } else {
+        expect(verdict.kind).toBe('unavailable');
+        expect(verdict.kind === 'unavailable' && verdict.reasons).toContain(reason);
+      }
+    }
+    expect(evaluate(null, 660, 720, now)).toEqual({ kind: 'unavailable', reasons: ['Select a room.'] });
+    expect(evaluate(room, null, 720, now).kind).toBe('unavailable');
+
+    // Never fails open: on a grid of requests the verdict is Available exactly when canBook says so,
+    // and every Unavailable verdict carries at least one reason.
+    for (let start = 480; start <= 900; start += 30) {
+      for (let end = 480; end <= 960; end += 30) {
+        const decision = canBook({ start, end, now, blocked: false, bookings: room.bookings });
+        const verdict = evaluate(room, start, end, now);
+        expect(verdict.kind === 'available').toBe(decision);
+        if (verdict.kind === 'unavailable') expect(verdict.reasons.length).toBeGreaterThan(0);
+      }
+    }
+
+    // AC5: no booking data changed.
+    expect(room.bookings).toEqual(before);
   });
 });
