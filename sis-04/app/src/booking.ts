@@ -8,24 +8,17 @@ export type BookingRequest = {
   bookings: ExistingBooking[];
 };
 
-const MINUTES_IN_DAY = 1440;
-const MAX_BOOKING_MINUTES = 120;
+export const MINUTES_IN_DAY = 1440;
+export const MAX_BOOKING_MINUTES = 120;
 
-// Returns true (Available) or false (Unavailable).
-// Conditions are copied from the original evaluateAvailability in App.tsx.
-export function canBook({ start, end, now, blocked, bookings }: {
-  start: number;
-  end: number;
-  now: number;
-  blocked: boolean;
-  bookings: { start: number; end: number }[];
-}): boolean {
-  if (!(0 <= start && start < end && end <= 1440)) return false;
-  if (!(start > now)) return false;
-  if (end - start > 120) return false;
-  if (blocked) return false;
+// AC1-AC5: returns true (Available) or false (Unavailable). Reads its arguments, changes nothing.
+export function canBook({ start, end, now, blocked, bookings }: BookingRequest): boolean {
+  if (!(0 <= start && start < end && end <= MINUTES_IN_DAY)) return false; // AC1
+  if (!(start > now)) return false; // AC1: not in the past
+  if (end - start > MAX_BOOKING_MINUTES) return false; // AC2
+  if (blocked) return false; // AC3
   for (const b of bookings) {
-    if (start < b.end && end > b.start) return false;
+    if (start < b.end && end > b.start) return false; // AC4: touching is allowed
   }
   return true;
 }
