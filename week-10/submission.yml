@@ -1,0 +1,65 @@
+# week-10/submission.yml — your declaration for this lab.
+#
+# Facts only. Every explanation goes in lab-report.md; nothing here repeats prose.
+# Fill every value. Check it before you push:
+#
+#     python tests/validate_submission.py
+#
+# The validator checks shape, never quality. A green run is the floor, not the grade.
+# If you cannot run Python, fill the file by hand against the comments — a malformed
+# file costs you nothing if the content is there.
+
+schema: 1
+week: "10"
+
+student:
+  name: "Abylaikhan Orynbassar"
+  student_id: "23B031400"
+  github: "RiceEnjoyer21"
+
+assistant:
+  tool: "Claude Code"
+  model: "Claude Sonnet 5.5 (claude-sonnet-5-5)"
+  environment: claude-code
+
+project:
+  starting_point: week-08
+  baseline_commit: "d769af3"
+  language: ts
+  vitest: "3.2.4"
+
+counts:
+  claims_challenged: 8
+  risks_registered: 7
+  risks_confirmed: 6
+  tests_final: 24
+  agents_lines_changed: 9
+
+audit:
+  level: 1
+
+decision:
+  top_two: [R1, R2]
+  mitigated: [R2, R1]
+  release: conditional
+
+checker:
+  # Numbers from YOUR last run of: python tests/check_audit.py
+  pass: 31
+  fail: 0
+  error: 0
+  commit: "1c3222e"
+  known_fails: []
+
+review_findings:
+  - "C3/R1: the AI repeated AGENTS.md line 19 (touching counts as an overlap) in its summary without noticing it contradicts the contract and tests T01, T08, X2, BUG-A - confirmed, fixed in the AGENTS.md patch"
+  - "K4 (src/booking.ts canBook): the AI said a booking with end <= start never matches the overlap test; my run shows a zero-length booking 650-650 rejects 620-680 - unsupported as stated"
+  - "R2 (src/App.tsx evaluateAvailability): the AI's fail-open claim is real - reasons.length === 0 returned Available; the R2 test failed before the refactor and passes after"
+  - "R2 refactor (src/booking.ts): the agent changed !(start > now) to start <= now without being asked, so canBook(now = NaN) went from false to true - rejected and restored"
+  - "S2 (Supabase anon key in the bundle): no Supabase package, key or env read exists in app/ - unsupported; the risk is only the AGENTS.md permission, R1"
+
+honesty:
+  review_was_read_only: yes
+  agents_patch_approved_by_me: yes
+  outputs_unedited: yes
+  ai_usage_disclosed: yes
