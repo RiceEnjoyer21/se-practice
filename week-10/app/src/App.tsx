@@ -8,7 +8,7 @@ import {
   CalendarClock,
   Ban,
 } from 'lucide-react';
-import { canBook } from './booking';
+import { evaluateAvailability, MAX_BOOKING_MINUTES, type Verdict } from './booking';
 
 type Booking = {
   id: string;
@@ -71,9 +71,6 @@ const SAMPLE_ROOMS: Room[] = [
   },
 ];
 
-const MINUTES_IN_DAY = 1440;
-const MAX_BOOKING_MINUTES = 120;
-
 function toMinutes(time: string): number | null {
   const m = /^(\d{1,2}):(\d{2})$/.exec(time.trim());
   if (!m) return null;
@@ -87,75 +84,6 @@ function fromMinutes(mins: number): string {
   const h = Math.floor(mins / 60);
   const m = mins % 60;
   return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
-}
-
-type Verdict =
-  | { kind: 'available' }
-  | { kind: 'unavailable'; reasons: string[] };
-
-type Violation =
-  | 'invalid-interval'
-  | 'start-not-future'
-  | 'too-long'
-  | 'room-blocked'
-  | 'overlap';
-
-function evaluateAvailability(
-  room: Room | null,
-  startMin: number | null,
-  endMin: number | null,
-  currentMin: number
-): Verdict {
-  if (!room) return { kind: 'unavailable', reasons: ['Select a room.'] };
-
-  // The decision itself comes from canBook; the code below only explains a rejection.
-  if (
-    startMin !== null &&
-    endMin !== null &&
-    canBook({
-      start: startMin,
-      end: endMin,
-      now: currentMin,
-      blocked: room.blocked,
-      bookings: room.bookings,
-    })
-  ) {
-    return { kind: 'available' };
-  }
-
-  const reasons: string[] = [];
-
-  // AC1: valid interval and start after current time
-  if (
-    startMin === null ||
-    endMin === null ||
-    !(0 <= startMin && startMin < endMin && endMin <= MINUTES_IN_DAY)
-  ) {
-    reasons.push('Enter a valid time interval (start before end, within 00:00–24:00).');
-  } else {
-    if (startMin <= currentMin) {
-      reasons.push('Start time must be after the current time.');
-    }
-    // AC2: max 120 minutes
-    if (endMin - startMin > MAX_BOOKING_MINUTES) {
-      reasons.push('Booking length cannot exceed 120 minutes.');
-    }
-    // AC3: blocked room
-    if (room.blocked) {
-      reasons.push('This room is currently blocked and cannot be booked.');
-    }
-    // AC4: overlap (touching allowed)
-    const overlaps = room.bookings.some(
-      (b) => startMin < b.end && endMin > b.start
-    );
-    if (overlaps) {
-      reasons.push('The interval overlaps an existing booking.');
-    }
-  }
-
-  return reasons.length === 0
-    ? { kind: 'available' }
-    : { kind: 'unavailable', reasons };
 }
 
 export default function App() {

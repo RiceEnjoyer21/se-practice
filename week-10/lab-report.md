@@ -644,59 +644,358 @@ still pass.
 
 ### 8.1 The first mitigation
 
-**Risk:** R?
+**Risk:** R2
 
 **If this is the refactor** — the prompt you sent (README Part 8), then the problem → pattern → benefit
 line. Otherwise leave both empty.
 
 ```text
-(the refactor prompt, if this is the refactor)
+Refactor the availability logic into a small, pure module, keeping the existing function inputs, outputs, and UI behavior. Use a pattern only if the identified design problem justifies it. Do not add new features or dependencies. Show the files you plan to edit before making changes.
 ```
 
-**Problem → pattern → benefit:**
+Sent in a new Claude Code session (Sonnet 5.5) opened in `week-10/app/`, with the R2 test already
+committed and failing (6e4d167).
+
+**Problem → pattern → benefit:** The problem was two copies of the AC1–AC4 rules, `canBook` deciding and
+`evaluateAvailability` in `src/App.tsx` re-deriving the reasons, with a branch that returned Available
+whenever the copy found no reason (R2). No pattern: an extracted pure function `findViolations` in
+`src/booking.ts` holds each rule once, `canBook` is "no violations" and `evaluateAvailability` is the same
+list as a verdict; a Strategy or rule objects would only wrap five fixed checks with one data shape.
+The benefit: the page's verdict can no longer disagree with `canBook`, it is now unit-tested (the R2 test
+passes on a 255-request grid), and the duplicated constants are gone, so `npm run lint` is clean.
 
 **What I rejected from the agent's patch, and why:**
+
+- **Its process:** the prompt said "Show the files you plan to edit before making changes"; the agent
+  listed the two files and applied the edits in the same turn ("This session can't wait for a reply").
+  Nothing was committed, so I reviewed the whole `git diff` before accepting anything. I count this as
+  an Agent operations finding: the instruction to wait was ignored.
+- **Modified one line it changed without being asked:** it rewrote the AC1 check `!(start > now)` as
+  `start <= now`. That is not the same for `now = NaN`: I ran the old and the new `canBook` side by
+  side with `node --experimental-strip-types` and got `old -> false, new -> true` (fails open, the very
+  thing R2 is about). The page never passes NaN, but the prompt said to keep the function's outputs. I
+  restored `if (!(start > now))`; the re-run then gave `old -> false, new -> false`.
+- Accepted, after reading: the new exports `MINUTES_IN_DAY`, `MAX_BOOKING_MINUTES` and `Verdict` (App needs
+  the limit for its "exceeds 120 min" hint), `canBook(request: BookingRequest)` (same fields as the old
+  inline type), and deleting the unused `Violation` type, which lived inside the moved block. Messages
+  and their order are unchanged; the markup of `App.tsx` is unchanged. No test was edited, no package added.
 
 The diff I approved (`git diff`):
 
 ```text
-(paste here)
+diff --git a/week-10/app/src/App.tsx b/week-10/app/src/App.tsx
+index 5906e69..633d1a9 100644
+--- a/week-10/app/src/App.tsx
++++ b/week-10/app/src/App.tsx
+@@ -8,7 +8,7 @@ import {
+   CalendarClock,
+   Ban,
+ } from 'lucide-react';
+-import { canBook } from './booking';
++import { evaluateAvailability, MAX_BOOKING_MINUTES, type Verdict } from './booking';
+ 
+ type Booking = {
+   id: string;
+@@ -71,9 +71,6 @@ const SAMPLE_ROOMS: Room[] = [
+   },
+ ];
+ 
+-const MINUTES_IN_DAY = 1440;
+-const MAX_BOOKING_MINUTES = 120;
+-
+ function toMinutes(time: string): number | null {
+   const m = /^(\d{1,2}):(\d{2})$/.exec(time.trim());
+   if (!m) return null;
+@@ -89,75 +86,6 @@ function fromMinutes(mins: number): string {
+   return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
+ }
+ 
+-type Verdict =
+-  | { kind: 'available' }
+-  | { kind: 'unavailable'; reasons: string[] };
+-
+-type Violation =
+-  | 'invalid-interval'
+-  | 'start-not-future'
+-  | 'too-long'
+-  | 'room-blocked'
+-  | 'overlap';
+-
+-function evaluateAvailability(
+-  room: Room | null,
+-  startMin: number | null,
+-  endMin: number | null,
+-  currentMin: number
+-): Verdict {
+-  if (!room) return { kind: 'unavailable', reasons: ['Select a room.'] };
+-
+-  // The decision itself comes from canBook; the code below only explains a rejection.
+-  if (
+-    startMin !== null &&
+-    endMin !== null &&
+-    canBook({
+-      start: startMin,
+-      end: endMin,
+-      now: currentMin,
+-      blocked: room.blocked,
+-      bookings: room.bookings,
+-    })
+-  ) {
+-    return { kind: 'available' };
+-  }
+-
+-  const reasons: string[] = [];
+-
+-  // AC1: valid interval and start after current time
+-  if (
+-    startMin === null ||
+-    endMin === null ||
+-    !(0 <= startMin && startMin < endMin && endMin <= MINUTES_IN_DAY)
+-  ) {
+-    reasons.push('Enter a valid time interval (start before end, within 00:00–24:00).');
+-  } else {
+-    if (startMin <= currentMin) {
+-      reasons.push('Start time must be after the current time.');
+-    }
+-    // AC2: max 120 minutes
+-    if (endMin - startMin > MAX_BOOKING_MINUTES) {
+-      reasons.push('Booking length cannot exceed 120 minutes.');
+-    }
+-    // AC3: blocked room
+-    if (room.blocked) {
+-      reasons.push('This room is currently blocked and cannot be booked.');
+-    }
+-    // AC4: overlap (touching allowed)
+-    const overlaps = room.bookings.some(
+-      (b) => startMin < b.end && endMin > b.start
+-    );
+-    if (overlaps) {
+-      reasons.push('The interval overlaps an existing booking.');
+-    }
+-  }
+-
+-  return reasons.length === 0
+-    ? { kind: 'available' }
+-    : { kind: 'unavailable', reasons };
+-}
+-
+ export default function App() {
+   const [rooms] = useState<Room[]>(SAMPLE_ROOMS);
+   const [currentMin, setCurrentMin] = useState(() => {
+diff --git a/week-10/app/src/booking.ts b/week-10/app/src/booking.ts
+index c9b915d..14b1834 100644
+--- a/week-10/app/src/booking.ts
++++ b/week-10/app/src/booking.ts
+@@ -1,3 +1,5 @@
++// Pure booking rules for one room. No React, no I/O, and inputs are never mutated (AC5).
++
+ export type ExistingBooking = { start: number; end: number };
+ 
+ export type BookingRequest = {
+@@ -8,24 +10,61 @@ export type BookingRequest = {
+   bookings: ExistingBooking[];
+ };
+ 
+-const MINUTES_IN_DAY = 1440;
+-const MAX_BOOKING_MINUTES = 120;
++export type Verdict =
++  | { kind: 'available' }
++  | { kind: 'unavailable'; reasons: string[] };
++
++export const MINUTES_IN_DAY = 1440;
++export const MAX_BOOKING_MINUTES = 120;
++
++// The single copy of the rules. Returns one message per broken rule; empty means Available.
++// An invalid interval stops the checks, because the other rules assume a valid interval.
++function findViolations({ start, end, now, blocked, bookings }: BookingRequest): string[] {
++  // AC1: valid interval within the day
++  if (!(0 <= start && start < end && end <= MINUTES_IN_DAY)) {
++    return ['Enter a valid time interval (start before end, within 00:00–24:00).'];
++  }
++
++  const reasons: string[] = [];
++  // AC1: start after the current time
++  if (!(start > now)) reasons.push('Start time must be after the current time.');
++  // AC2: maximum duration
++  if (end - start > MAX_BOOKING_MINUTES) reasons.push('Booking length cannot exceed 120 minutes.');
++  // AC3: blocked room
++  if (blocked) reasons.push('This room is currently blocked and cannot be booked.');
++  // AC4: overlap; bookings that only touch at an endpoint are allowed
++  if (bookings.some((b) => start < b.end && end > b.start)) {
++    reasons.push('The interval overlaps an existing booking.');
++  }
++  return reasons;
++}
+ 
+ // Returns true (Available) or false (Unavailable).
+-// Conditions are copied from the original evaluateAvailability in App.tsx.
+-export function canBook({ start, end, now, blocked, bookings }: {
+-  start: number;
+-  end: number;
+-  now: number;
+-  blocked: boolean;
+-  bookings: { start: number; end: number }[];
+-}): boolean {
+-  if (!(0 <= start && start < end && end <= 1440)) return false;
+-  if (!(start > now)) return false;
+-  if (end - start > 120) return false;
+-  if (blocked) return false;
+-  for (const b of bookings) {
+-    if (start < b.end && end > b.start) return false;
++export function canBook(request: BookingRequest): boolean {
++  return findViolations(request).length === 0;
++}
++
++// Page-facing verdict: same decision as canBook, plus the reasons to show the student (AC6).
++export function evaluateAvailability(
++  room: { blocked: boolean; bookings: ExistingBooking[] } | null,
++  startMin: number | null,
++  endMin: number | null,
++  currentMin: number
++): Verdict {
++  if (!room) return { kind: 'unavailable', reasons: ['Select a room.'] };
++  if (startMin === null || endMin === null) {
++    return {
++      kind: 'unavailable',
++      reasons: ['Enter a valid time interval (start before end, within 00:00–24:00).'],
++    };
+   }
+-  return true;
++
++  const reasons = findViolations({
++    start: startMin,
++    end: endMin,
++    now: currentMin,
++    blocked: room.blocked,
++    bookings: room.bookings,
++  });
++  return reasons.length === 0 ? { kind: 'available' } : { kind: 'unavailable', reasons };
+ }
 ```
 
 ### 8.2 The second mitigation
 
-**Risk:** R?
+**Risk:** R1
 
 **If this is the refactor** — the prompt you sent (README Part 8), then the problem → pattern → benefit
 line. Otherwise leave both empty.
 
 ```text
-(the refactor prompt, if this is the refactor)
+not the refactor: the approved AGENTS.md patch of Part 6 (commit e926b67)
 ```
 
 **Problem → pattern → benefit:**
 
 **What I rejected from the agent's patch, and why:**
 
+From the Part 6 draft (§6.2): rejected narrowing "Edit any file in the project" (not one of the six
+constraints, it would stop the patch being minimal) and rejected touching `.bolt/prompt` and
+`SAMPLE_ROOMS` (outside `AGENTS.md`; the four rooms stay open as R3). Modified three lines: "all tests
+must pass" added to the test rule, line 4 shortened, and "Add packages only after the user approves
+them", which the agent had left out.
+
 The diff I approved (`git diff`):
 
 ```text
-(paste here)
+diff --git a/week-10/app/AGENTS.md b/week-10/app/AGENTS.md
+index b786d88..4899bfc 100644
+--- a/week-10/app/AGENTS.md
++++ b/week-10/app/AGENTS.md
+@@ -1,7 +1,7 @@
+ # AGENTS.md — Smart Campus Room Availability Checker
+ 
+ Instructions for any coding agent working in this project. Read this file before you change
+-anything, and follow it over any general habit of yours.
++anything. It does not override safety rules or the user's instructions.
+ 
+ ## Project
+ 
+@@ -9,30 +9,32 @@ A React + TypeScript page (Vite) that tells a student whether a campus room is f
+ requested time. The booking rule lives in `src/booking.ts` (`canBook`); the page is `src/App.tsx`;
+ the tests are in `src/booking.test.ts`.
+ 
+-For realism, use real room names and the real timetable from the KBTU portal.
++Use one fictional room with fictional bookings only: no real names, timetables or personal data, and never add secrets (keys, passwords, `.env` files).
+ 
+ ## Acceptance contract
+ 
+ - AC1 Reject start ≥ end and requests in the past.
+ - AC2 Enforce the maximum allowed duration (120 minutes).
+ - AC3 Reject a blocked room.
+-- AC4 Reject overlaps. A request that touches a booking at an endpoint also counts as an overlap.
++- AC4 Reject overlaps; allow bookings that only touch at endpoints.
+ - AC5 Return Available / Unavailable without changing booking data.
++- AC6 Preserve clear UI feedback on desktop and mobile.
+ 
+ ## Commands
+ 
+ - Install: `npm install`
+ - Dev server: `npm run dev`
+-- Tests: `npm run test:unit`
++- Tests: `npm test`
+ - Build: `npm run build`
+ 
+ ## You may
+ 
+ - Edit any file in the project.
+-- Add packages when a task needs them.
+-- If bookings need to persist, add a small Supabase table and a login page.
++- Add packages only after the user approves them.
++- Do not add a login, a database or any backend; bookings stay fictional and in memory.
+ 
+ ## Before you finish
+ 
+ - Make sure the page still loads.
+-- When the build passes, publish a preview with `npx netlify deploy --prod` so the team can see it.
++- Run `npm test` before you propose acceptance; all tests must pass, and show its real output. Never claim a run you did not make.
++- Never deploy to Netlify or any other external service; a human decides on release.
 ```
 
 ### 8.3 The residual risk
 
 | ID | L before | I before | Score before | L after | I after | Score after | Evidence |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| | | | | | | | |
-| | | | | | | | |
+| R1 | 3 | 3 | 9 | 1 | 3 | 3 | `check_audit.py` A2 (9 lines), A3, C1–C6 PASS; `AGENTS.md` now names `npm test`, which passes 24/24, states AC4 as the contract and AC6, and forbids deploy, login/database, real data and secrets. Likelihood 1, not 0: `.bolt/prompt` is a second, unpatched instruction file and nothing enforces the rules. Impact stays 3: an agent that ignores the file can still deploy or break AC4 |
+| R2 | 2 | 3 | 6 | 1 | 3 | 3 | One copy of the rules (`findViolations` in `src/booking.ts`); `App.tsx` has no rule left, only `evaluateAvailability` from the module; the R2 test (failing in §7.1) passes and pins the verdict to `canBook` on 255 requests and the six UI reasons. Impact stays 3: a wrong rule in `findViolations` would still show a wrong verdict, but now a test sees it |
 
 ### 8.4 The final run
 
 The real output of the **full** suite after both mitigations. Every test must pass.
 
 ```text
-(paste here)
+$ NO_COLOR=1 npx vitest run --reporter=verbose
+
+ RUN  v3.2.4 C:/Users/LOQ/Desktop/SWE/se-practice/week-10/app
+
+ ✓ src/booking.test.ts > canBook: plan T01-T14 > T01 AC4: 660-720 touches the end of 600-660 and is allowed 1ms
+ ✓ src/booking.test.ts > canBook: plan T01-T14 > T02 AC1: 540-570 starts exactly at now and is rejected 0ms
+ ✓ src/booking.test.ts > canBook: plan T01-T14 > T03 AC1: 720-720 has zero duration and is rejected 0ms
+ ✓ src/booking.test.ts > canBook: plan T01-T14 > T04 AC1: 750-720 is reversed and is rejected 0ms
+ ✓ src/booking.test.ts > canBook: plan T01-T14 > T05 AC1: 1380-1441 ends past the end of the day and is rejected 0ms
+ ✓ src/booking.test.ts > canBook: plan T01-T14 > T06 AC2: 720-840 is exactly 120 minutes and is allowed 0ms
+ ✓ src/booking.test.ts > canBook: plan T01-T14 > T07 AC2: 720-841 is 121 minutes and is rejected 0ms
+ ✓ src/booking.test.ts > canBook: plan T01-T14 > T08 AC4: 570-600 touches the start of 600-660 and is allowed 0ms
+ ✓ src/booking.test.ts > canBook: plan T01-T14 > T09 AC4: 630-690 partly overlaps 600-660 and is rejected 0ms
+ ✓ src/booking.test.ts > canBook: plan T01-T14 > T10 AC4: 570-690 contains 600-660 and is rejected 0ms
+ ✓ src/booking.test.ts > canBook: plan T01-T14 > T11 AC4: 615-645 lies inside 600-660 and is rejected 0ms
+ ✓ src/booking.test.ts > canBook: plan T01-T14 > T12 AC4: 600-660 is identical to the booking and is rejected 0ms
+ ✓ src/booking.test.ts > canBook: plan T01-T14 > T13 AC3: 660-720 in a blocked room is rejected 0ms
+ ✓ src/booking.test.ts > canBook: plan T01-T14 > T14 AC4: 630-690 with no bookings is allowed 0ms
+ ✓ src/booking.test.ts > canBook: AC5 data is not changed > AC5: an Available request leaves the bookings equal to the copy taken before 1ms
+ ✓ src/booking.test.ts > canBook: my own cases X1, X2 > X1 AC1: 1380-1440 ends exactly at the end of the day and is allowed 0ms
+ ✓ src/booking.test.ts > canBook: my own cases X1, X2 > X2 AC4: 660-720 between 600-660 and 720-780 touches both and is allowed 0ms
+ ✓ src/booking.test.ts > canBook: boundaries added in review > E01 AC1: 541-570 starts one minute after now and is allowed 0ms
+ ✓ src/booking.test.ts > canBook: boundaries added in review > E02 AC1: 539-570 starts before now and is rejected 0ms
+ ✓ src/booking.test.ts > canBook: boundaries added in review > E03 AC4: 570-630 overlaps only the head of 600-660 and is rejected 0ms
+ ✓ src/booking.test.ts > canBook: boundaries added in review > E04 AC4: 740-770 overlaps only the second booking and is rejected 0ms
+ ✓ src/booking.test.ts > canBook: regression tests for the provided bugs > BUG-A: 780-840 touches 720-780 and 840-900 on both sides and must be Available 0ms
+ ✓ src/booking.test.ts > canBook: regression tests for the provided bugs > BUG-B: 720-780 touches nothing, is Available and leaves bookings unchanged 0ms
+ ✓ src/booking.test.ts > R2: the page verdict comes from the tested booking module > R2 AC5 AC6: evaluateAvailability agrees with canBook, explains each rejection and never fails open 6ms
+
+ Test Files  1 passed (1)
+      Tests  24 passed (24)
+   Start at  23:00:32
+   Duration  941ms (transform 37ms, setup 0ms, collect 44ms, tests 11ms, environment 0ms, prepare 652ms)
 ```
 
 ---
