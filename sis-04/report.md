@@ -422,7 +422,7 @@ without the other, the page will show wrong or missing reasons. […] A smaller 
 
 | Check | Why it still fails |
 | --- | --- |
-| (write here) | (write here) |
+| none | The last run of `python tests/check_sis.py` (after deleting the local, git-ignored `app/node_modules`) gives pass=33 fail=0 error=0 |
 
 ## 10. AI reflection (Task 6)
 
@@ -431,4 +431,4 @@ without the other, the page will show wrong or missing reasons. […] A smaller 
      incorrect? What did you personally verify? How did tests influence your engineering
      decisions? What would you improve next? -->
 
-(write here)
+I worked with Claude Code. During the analysis, I supplied a new agent with a single context note: a map of `app/src`, AC1-AC6, F1-F5, fixed module names, and constraints (fictional data, no login, database or network). I requested potential hazards and a strategy, not programming. Subsequent agents received more focused requests: a `filter.test.ts` draft, followed by a read-only assessment of changes relative to `f890f8e`.The valuable recommendations included the risk inventory, particularly how `evaluateAvailability()` manually verified AC1-AC4, plus the proposal for a single `resetResult()`. Some were faulty or unsafe. The plan requested one test covering every case, a table-driven method forbidden in this context. The draft INT test invoked `checkRoom` against the entire catalog rather than the output from `filterRooms`, so it verified nothing about their combined behavior. The feedback correctly noted that `rejectionReasons` continues to repeat the conditions; I described this as a limitation rather than asserting duplication had disappeared.I checked each risk with `grep -n` and fixed its line numbers. My personal count showed App.tsx contained roughly 470 lines; `wc -l` reported 495. I manually derived every filter requirement from F1 and F2 before filter.ts was actually created. I additionally reviewed every screenshot, which captured a `switch-b` frame with the former room still visibly highlighted there.Tests guided the design process. Since the 23 week-08 tests safeguard `canBook`, I left it unchanged and placed the explanations in a distinct function. Each additional test initially failed, while the entire suite remained passing after each individual step.Next, I’d add a rendered test covering F4 and F5, and derive reason texts from the same predicates used by `canBook`, so the rules remain together in one place.

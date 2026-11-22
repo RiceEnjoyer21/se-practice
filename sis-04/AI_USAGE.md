@@ -27,10 +27,12 @@ All new tests in `booking.test.ts` (B1-B4, F3, F5, AC5 for `checkRoom`, the `why
 **I shared no credentials, keys or private data with any tool:** yes
 
 **Everything I submitted, I can explain and defend in class — including filterRooms, checkRoom and
-why each module exists:** yes / no
+why each module exists:** yes
 
-**Anything I accepted from the AI without fully understanding it:**
+**report.md section 10 (reflection):** written by myself
+
+**Anything I accepted from the AI without fully understanding it:** nothing
 <!-- Name the file and the line. An honest entry here costs far less than a blank one that turns out to be untrue. -->
 
-Signed: <your name>
-Date:
+Signed: Abylaikhan
+Date: 22.11.2026
